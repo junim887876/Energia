@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>SolarInvest - Área do Cliente</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
         :root {
             --primary: #0071e3;
@@ -16,6 +17,7 @@
             --text-secondary: #86868b;
             --success: #30d158;
             --danger: #ff453a;
+            --whatsapp: #25D366;
         }
 
         * {
@@ -40,34 +42,15 @@
             padding: 20px 16px;
         }
 
-        .glow-orb {
+        .glow-orb, .glow-orb-2 {
             position: absolute;
-            width: 300px;
-            height: 300px;
             background: radial-gradient(circle, rgba(255, 158, 0, 0.12) 0%, rgba(0,0,0,0) 70%);
-            top: -50px;
-            left: -50px;
-            z-index: 0;
-            pointer-events: none;
+            z-index: 0; pointer-events: none;
         }
+        .glow-orb { width: 300px; height: 300px; top: -50px; left: -50px; }
+        .glow-orb-2 { width: 400px; height: 400px; bottom: -100px; right: -100px; background: radial-gradient(circle, rgba(0, 113, 227, 0.08) 0%, rgba(0,0,0,0) 70%); }
 
-        .glow-orb-2 {
-            position: absolute;
-            width: 400px;
-            height: 400px;
-            background: radial-gradient(circle, rgba(0, 113, 227, 0.08) 0%, rgba(0,0,0,0) 70%);
-            bottom: -100px;
-            right: -100px;
-            z-index: 0;
-            pointer-events: none;
-        }
-
-        .container {
-            width: 100%;
-            max-width: 430px;
-            position: relative;
-            z-index: 1;
-        }
+        .container { width: 100%; max-width: 430px; position: relative; z-index: 1; }
 
         .glass-card {
             background: var(--glass-bg);
@@ -80,385 +63,154 @@
             transition: all 0.3s cubic-bezier(0.25, 1, 0.5, 1);
         }
 
-        .logo-box {
-            text-align: center;
-            margin-bottom: 24px;
-        }
+        .logo-box { text-align: center; margin-bottom: 24px; }
+        .logo-box img { width: 150px; height: auto; object-fit: contain; filter: drop-shadow(0 4px 12px rgba(0,0,0,0.3)); }
 
-        .logo-box img {
-            width: 150px;
-            height: auto;
-            object-fit: contain;
-            filter: drop-shadow(0 4px 12px rgba(0,0,0,0.3));
-        }
+        #login-screen { display: flex; flex-direction: column; }
+        .welcome-text { text-align: center; margin-bottom: 24px; }
+        .welcome-text h1 { font-size: 24px; font-weight: 600; letter-spacing: -0.5px; margin-bottom: 8px; }
+        .welcome-text p { color: var(--text-secondary); font-size: 14px; }
 
-        #login-screen {
-            display: flex;
-            flex-direction: column;
-        }
-
-        .welcome-text {
-            text-align: center;
-            margin-bottom: 24px;
-        }
-
-        .welcome-text h1 {
-            font-size: 24px;
-            font-weight: 600;
-            letter-spacing: -0.5px;
-            margin-bottom: 8px;
-        }
-
-        .welcome-text p {
-            color: var(--text-secondary);
-            font-size: 14px;
-        }
-
-        .input-group {
-            margin-bottom: 18px;
-            position: relative;
-        }
-
+        .input-group { margin-bottom: 18px; position: relative; }
         .input-group input {
-            width: 100%;
-            background: rgba(255, 255, 255, 0.06);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 14px;
-            padding: 16px;
-            color: #fff;
-            font-size: 16px;
-            outline: none;
-            transition: all 0.2s;
+            width: 100%; background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 14px; padding: 16px; color: #fff; font-size: 16px; outline: none; transition: all 0.2s;
         }
-
-        .input-group input:focus {
-            border-color: #ff9e00;
-            background: rgba(255, 255, 255, 0.1);
-            box-shadow: 0 0 0 4px rgba(255, 158, 0, 0.15);
-        }
+        .input-group input:focus { border-color: #ff9e00; background: rgba(255, 255, 255, 0.1); box-shadow: 0 0 0 4px rgba(255, 158, 0, 0.15); }
 
         .btn-primary {
-            background: var(--primary-gradient);
-            color: #000;
-            border: none;
-            border-radius: 14px;
-            padding: 16px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            width: 100%;
-            box-shadow: 0 4px 15px rgba(255, 158, 0, 0.3);
-            display: flex;
-            justify-content: center;
-            align-items: center;
+            background: var(--primary-gradient); color: #000; border: none; border-radius: 14px;
+            padding: 16px; font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.2s ease;
+            width: 100%; box-shadow: 0 4px 15px rgba(255, 158, 0, 0.3); display: flex; justify-content: center; align-items: center;
         }
+        .btn-primary:active { transform: scale(0.98); opacity: 0.9; }
+        .btn-primary:disabled { opacity: 0.7; cursor: not-allowed; }
 
-        .btn-primary:active {
-            transform: scale(0.98);
-            opacity: 0.9;
-        }
-        
-        .btn-primary:disabled {
-            opacity: 0.7;
-            cursor: not-allowed;
-        }
+        #dashboard-screen { display: none; }
 
-        #dashboard-screen {
-            display: none;
-        }
-
-        /* PERFIL ESTILO REDE SOCIAL */
-        .social-profile-bar {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 18px;
-        }
-
-        .profile-left {
-            display: flex;
-            align-items: center;
-            gap: 14px;
-        }
-
+        .social-profile-bar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; }
+        .profile-left { display: flex; align-items: center; gap: 14px; }
         .avatar-circle {
-            width: 48px;
-            height: 48px;
-            border-radius: 50%;
-            background: var(--primary-gradient);
-            color: #0b0f19;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 700;
-            font-size: 20px;
-            text-transform: uppercase;
-            box-shadow: 0 0 16px rgba(255, 158, 0, 0.3);
-            border: 2px solid rgba(255, 255, 255, 0.1);
+            width: 48px; height: 48px; border-radius: 50%; background: var(--primary-gradient); color: #0b0f19;
+            display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 20px;
+            text-transform: uppercase; box-shadow: 0 0 16px rgba(255, 158, 0, 0.3); border: 2px solid rgba(255, 255, 255, 0.1);
         }
-
-        .user-meta h2 {
-            font-size: 18px;
-            font-weight: 600;
-            text-transform: capitalize;
-            letter-spacing: -0.3px;
-        }
-
-        .user-meta p {
-            color: var(--text-secondary);
-            font-size: 12px;
-        }
+        .user-meta h2 { font-size: 18px; font-weight: 600; text-transform: capitalize; letter-spacing: -0.3px; }
+        .user-meta p { color: var(--text-secondary); font-size: 12px; }
 
         .logout-btn {
-            background: rgba(255, 255, 255, 0.06);
-            color: var(--text-main);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            padding: 8px 14px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: 500;
-            cursor: pointer;
-            transition: background 0.2s;
+            background: rgba(255, 255, 255, 0.06); color: var(--text-main); border: 1px solid rgba(255, 255, 255, 0.08);
+            padding: 8px 14px; border-radius: 20px; font-size: 12px; font-weight: 500; cursor: pointer; transition: background 0.2s;
         }
+        .logout-btn:active { background: rgba(255, 69, 58, 0.15); color: var(--danger); }
 
-        .logout-btn:active {
-            background: rgba(255, 69, 58, 0.15);
-            color: var(--danger);
-        }
-
-        /* ABAS */
         .segmented-control {
-            display: flex;
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 14px;
-            padding: 4px;
-            margin-bottom: 16px;
-            border: 1px solid rgba(255, 255, 255, 0.04);
+            display: flex; background: rgba(255, 255, 255, 0.05); border-radius: 14px; padding: 4px;
+            margin-bottom: 16px; border: 1px solid rgba(255, 255, 255, 0.04);
         }
-
         .tab-btn {
-            flex: 1;
-            background: none;
-            border: none;
-            color: var(--text-secondary);
-            padding: 10px;
-            font-size: 14px;
-            font-weight: 600;
-            border-radius: 10px;
-            cursor: pointer;
-            transition: all 0.25s ease;
-            -webkit-tap-highlight-color: transparent;
+            flex: 1; background: none; border: none; color: var(--text-secondary); padding: 10px;
+            font-size: 14px; font-weight: 600; border-radius: 10px; cursor: pointer; transition: all 0.25s ease;
         }
+        .tab-btn.active { background: rgba(255, 255, 255, 0.12); color: #fff; box-shadow: 0 4px 12px rgba(0,0,0,0.2); backdrop-filter: var(--glass-webkit-blur); }
 
-        .tab-btn.active {
-            background: rgba(255, 255, 255, 0.12);
-            color: #fff;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-            backdrop-filter: var(--glass-webkit-blur);
-        }
-
-        /* ELEMENTOS DA FATURA */
+        /* LISTA CLICÁVEL */
         .invoice-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            padding: 20px 0;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            display: flex; justify-content: space-between; align-items: flex-start; padding: 20px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05); cursor: pointer; transition: background 0.2s;
         }
+        .invoice-item:active { background: rgba(255, 255, 255, 0.03); border-radius: 12px; }
+        .invoice-item:last-child { border-bottom: none; padding-bottom: 0; }
+        .invoice-item:first-child { padding-top: 0; }
+        
+        .invoice-details { display: flex; flex-direction: column; gap: 6px; padding-top: 4px; }
+        .invoice-month { font-weight: 600; font-size: 16px; text-transform: capitalize; }
+        .invoice-meta { font-size: 13px; color: var(--text-secondary); }
+        .invoice-right { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
 
-        .invoice-item:last-child {
-            border-bottom: none;
-            padding-bottom: 0;
-        }
-
-        .invoice-item:first-child {
-            padding-top: 0;
-        }
-
-        .invoice-details {
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-            padding-top: 4px;
-        }
-
-        .invoice-month {
-            font-weight: 600;
-            font-size: 16px;
-            text-transform: capitalize;
-        }
-
-        .invoice-meta {
-            font-size: 13px;
-            color: var(--text-secondary);
-        }
-
-        .invoice-right {
-            display: flex;
-            flex-direction: column;
-            align-items: flex-end;
-            gap: 4px;
-        }
-
-        /* PRICING MARKETING - EFEITO ÂNCORA */
-        .pricing-block {
-            display: flex;
-            flex-direction: column;
-            align-items: flex-end;
-            margin-bottom: 6px;
-        }
-
+        .pricing-block { display: flex; flex-direction: column; align-items: flex-end; margin-bottom: 6px; }
         .discount-badge {
-            font-size: 10px;
-            font-weight: 800;
-            color: var(--success);
-            background: rgba(48, 209, 88, 0.15);
-            padding: 2px 8px;
-            border-radius: 6px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            margin-bottom: 4px;
-            border: 1px solid rgba(48, 209, 88, 0.3);
+            font-size: 10px; font-weight: 800; color: var(--success); background: rgba(48, 209, 88, 0.15);
+            padding: 2px 8px; border-radius: 6px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; border: 1px solid rgba(48, 209, 88, 0.3);
         }
+        .invoice-price-old { font-size: 13px; color: var(--text-secondary); text-decoration: line-through; font-weight: 500; margin-bottom: -2px; }
+        .invoice-price-new { font-size: 24px; font-weight: 800; color: #fff; letter-spacing: -0.5px; }
 
-        .invoice-price-old {
-            font-size: 13px;
-            color: var(--text-secondary);
-            text-decoration: line-through;
-            font-weight: 500;
-            margin-bottom: -2px;
-        }
+        .status-badge { font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 20px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .status-badge.pago { background: rgba(48, 209, 88, 0.15); color: var(--success); border: 1px solid rgba(48, 209, 88, 0.2); }
+        .status-badge.pendente { background: rgba(255, 69, 58, 0.15); color: var(--danger); border: 1px solid rgba(255, 69, 58, 0.2); }
 
-        .invoice-price-new {
-            font-size: 24px;
-            font-weight: 800;
-            color: #fff;
-            letter-spacing: -0.5px;
-        }
-
-        .status-badge {
-            font-size: 11px;
-            font-weight: 700;
-            padding: 4px 10px;
-            border-radius: 20px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .status-badge.pago {
-            background: rgba(48, 209, 88, 0.15);
-            color: var(--success);
-            border: 1px solid rgba(48, 209, 88, 0.2);
-        }
-
-        .status-badge.pendente {
-            background: rgba(255, 69, 58, 0.15);
-            color: var(--danger);
-            border: 1px solid rgba(255, 69, 58, 0.2);
-        }
-
-        .download-link {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            color: #ff9e00;
-            text-decoration: none;
-            font-size: 13px;
-            font-weight: 500;
-            transition: opacity 0.2s;
-            margin-top: 6px;
-        }
-
-        .download-link:active {
-            opacity: 0.7;
-        }
+        .error-msg { color: var(--danger); font-size: 13px; text-align: center; margin-top: 10px; display: none; font-weight: 500; }
+        .empty-state { text-align: center; padding: 32px 0; color: var(--text-secondary); font-size: 14px; }
         
-        .download-link.disabled {
-            color: var(--text-secondary);
-            pointer-events: none;
-            opacity: 0.4;
-        }
-
-        /* ANÚNCIO */
-        .ad-container {
-            margin-top: 6px;
-            padding: 0;
-            overflow: hidden;
-            border-radius: 20px;
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
-        }
-
-        .ad-link {
-            display: block;
-            width: 100%;
-            height: 100%;
-            line-height: 0;
-        }
-
-        .ad-image {
-            width: 100%;
-            height: auto;
-            display: block;
-            transition: transform 0.3s ease;
-        }
-
-        .ad-link:active .ad-image {
-            transform: scale(0.98);
-        }
-
-        .error-msg {
-            color: var(--danger);
-            font-size: 13px;
-            text-align: center;
-            margin-top: 10px;
-            display: none;
-            font-weight: 500;
-        }
-
-        .empty-state {
-            text-align: center;
-            padding: 32px 0;
-            color: var(--text-secondary);
-            font-size: 14px;
-        }
-
-        /* FOOTER BRANDING */
-        .footer-branding {
-            width: 100%;
-            text-align: center;
-            font-size: 11px;
-            color: rgba(255, 255, 255, 0.2);
-            margin-top: 24px;
-            margin-bottom: 8px;
-            letter-spacing: 0.3px;
-            font-weight: 400;
-            pointer-events: none;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(8px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        .animated {
-            animation: fadeIn 0.4s cubic-bezier(0.25, 1, 0.5, 1) forwards;
-        }
+        .footer-branding { width: 100%; text-align: center; font-size: 11px; color: rgba(255, 255, 255, 0.2); margin-top: 24px; margin-bottom: 8px; letter-spacing: 0.3px; font-weight: 400; }
         
-        .spinner {
-            border: 3px solid rgba(0,0,0,0.1);
-            width: 20px;
-            height: 20px;
-            border-radius: 50%;
-            border-left-color: #000;
-            animation: spin 1s linear infinite;
-            display: none;
-            margin-right: 8px;
-        }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+        .animated { animation: fadeIn 0.4s cubic-bezier(0.25, 1, 0.5, 1) forwards; }
         
+        .spinner { border: 3px solid rgba(0,0,0,0.1); width: 20px; height: 20px; border-radius: 50%; border-left-color: #000; animation: spin 1s linear infinite; display: none; margin-right: 8px; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
+        /* ================= BOTTOM SHEET MODAL (NATIVO APPLE) ================= */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
+            z-index: 1000; display: none; opacity: 0; transition: opacity 0.3s ease;
+        }
+        .bottom-sheet {
+            position: fixed; bottom: 0; left: 0; width: 100%;
+            background: var(--bg-gradient); border-top-left-radius: 28px; border-top-right-radius: 28px;
+            padding: 20px 24px 34px; z-index: 1001;
+            transform: translateY(100%); transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+            border-top: 1px solid var(--glass-border); max-height: 90vh; overflow-y: auto;
+            box-shadow: 0 -10px 40px rgba(0,0,0,0.5);
+        }
+        .modal-pill {
+            width: 40px; height: 5px; background: rgba(255,255,255,0.2); border-radius: 10px;
+            margin: 0 auto 20px;
+        }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .modal-header h3 { font-size: 22px; font-weight: 700; text-transform: capitalize; }
+        
+        .detail-row {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+        .detail-row:last-of-type { border-bottom: none; }
+        .detail-label { color: var(--text-secondary); font-size: 14px; }
+        .detail-value { font-weight: 600; font-size: 15px; color: #fff; text-align: right;}
+        
+        .modal-price-box {
+            background: rgba(255, 255, 255, 0.03); border-radius: 16px; padding: 20px; margin: 16px 0;
+            text-align: center; border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        .modal-price-box h4 { color: var(--text-secondary); font-size: 13px; font-weight: 500; margin-bottom: 6px; }
+        .modal-price-box h2 { font-size: 32px; font-weight: 800; color: var(--primary-gradient); background: var(--primary-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+
+        /* PIX E QR CODE */
+        .payment-section { margin-top: 20px; display: none; } /* Oculto por padrão, aparece se pendente */
+        .qr-container {
+            background: #fff; padding: 16px; border-radius: 16px; display: flex; justify-content: center;
+            align-items: center; margin: 0 auto 16px; width: fit-content;
+        }
+        .btn-pix {
+            background: rgba(48, 209, 88, 0.15); color: var(--success); border: 1px solid rgba(48, 209, 88, 0.3);
+            border-radius: 12px; padding: 16px; font-size: 15px; font-weight: 700; cursor: pointer; width: 100%;
+            display: flex; justify-content: center; align-items: center; gap: 8px; margin-bottom: 12px;
+        }
+        .btn-pix:active { transform: scale(0.98); }
+        
+        .btn-whatsapp {
+            background: rgba(37, 211, 102, 0.15); color: var(--whatsapp); border: 1px solid rgba(37, 211, 102, 0.3);
+            border-radius: 12px; padding: 14px; font-size: 15px; font-weight: 600; cursor: pointer; width: 100%;
+            display: flex; justify-content: center; align-items: center; gap: 8px; text-decoration: none;
+        }
+        .btn-whatsapp:active { transform: scale(0.98); }
+        
+        .paid-message {
+            text-align: center; color: var(--success); font-weight: 600; padding: 20px;
+            background: rgba(48, 209, 88, 0.1); border-radius: 16px; margin-top: 16px; display: none;
+        }
     </style>
 </head>
 <body>
@@ -495,7 +247,8 @@
                 <div class="profile-left">
                     <div id="user-avatar" class="avatar-circle">U</div>
                     <div class="user-meta">
-                        <h2 id="client-name">@usuario</h2>
+                        <!-- Removido o @ do nome -->
+                        <h2 id="client-name">Usuario</h2>
                         <p>Cliente SolarInvest</p>
                     </div>
                 </div>
@@ -509,14 +262,8 @@
 
             <div class="glass-card animated" style="animation-delay: 0.1s;">
                 <div id="invoice-list-container">
-                    <!-- Conteúdo dinâmico injetado via JS -->
+                    <!-- Faturas listadas dinamicamente -->
                 </div>
-            </div>
-
-            <div class="ad-container animated" style="animation-delay: 0.15s;">
-                <a href="https://junim887876.github.io/urbanacai/" target="_blank" class="ad-link">
-                    <img src="anuncio.jpg" alt="Oferta SolarInvest" class="ad-image" onerror="this.style.display='none'">
-                </a>
             </div>
         </div>
 
@@ -526,16 +273,67 @@
 
     </div>
 
+    <!-- ================= MODAL FATURA DETALHADA ================= -->
+    <div class="modal-overlay" id="modal-overlay" onclick="closeModal()"></div>
+    <div class="bottom-sheet" id="bottom-sheet">
+        <div class="modal-pill"></div>
+        <div class="modal-header">
+            <h3 id="modal-title">Fatura Mês</h3>
+            <span id="modal-status" class="status-badge">STATUS</span>
+        </div>
+
+        <div class="modal-price-box">
+            <h4>Valor a Pagar</h4>
+            <h2 id="modal-valor-final">R$ 0,00</h2>
+        </div>
+
+        <div class="detail-row">
+            <span class="detail-label">Consumo Total</span>
+            <span class="detail-value" id="modal-consumo">0 kWh</span>
+        </div>
+        <div class="detail-row">
+            <span class="detail-label">Valor Bruto (Concessionária)</span>
+            <span class="detail-value" id="modal-valor-bruto" style="text-decoration: line-through; color: var(--text-secondary);">R$ 0,00</span>
+        </div>
+        <div class="detail-row">
+            <span class="detail-label">Desconto SolarInvest</span>
+            <span class="detail-value" id="modal-economia" style="color: var(--success);">R$ 0,00</span>
+        </div>
+
+        <!-- Se estiver Pago -->
+        <div class="paid-message" id="modal-paid-msg">
+            ✅ Esta fatura já está paga!
+        </div>
+
+        <!-- Se estiver Pendente (Pix + WhatsApp) -->
+        <div class="payment-section" id="modal-payment-section">
+            <div class="qr-container" id="qrcode"></div>
+            
+            <button class="btn-pix" onclick="copyPix()">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                <span id="pix-btn-text">Copiar Pix Copia e Cola</span>
+            </button>
+        </div>
+        
+        <!-- Botão Ajuda WhatsApp (Sempre visível no modal) -->
+        <a href="https://wa.me/5562999999999?text=Preciso%20de%20ajuda%20com%20minha%20fatura%20SolarInvest" target="_blank" class="btn-whatsapp" style="margin-top: 12px;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
+            Ajuda
+        </a>
+    </div>
+
     <script>
         const SHEET_ID = '1IxzUCFbGIxOMrCGnjfHNlB16ll64TKh75SDOV1oOnWw';
         
+        // CHAVE PIX FIXA CONFORME SOLICITADO
+        const PIX_STRING = "00020126580014br.gov.bcb.pix01369f9b64c3-1447-4849-b11a-d721f248c50b5204000053039865802BR5911JUJO79265376009Sao Paulo610901227-20062230519daqr2210911950416626304D54C";
+
         let allClientInvoices = [];
+        let currentFilteredInvoices = [];
         let activeTab = 'pendente'; 
 
         function parseCSV(str) {
-            const arr = [];
-            let quote = false;
-            let row = [], col = '';
+            const arr = []; let quote = false; let row = [], col = '';
             for (let c = 0; c < str.length; c++) {
                 let cc = str[c], nc = str[c+1];
                 if (cc === '\r') continue; 
@@ -543,19 +341,12 @@
                 if (cc === '"') { quote = !quote; continue; }
                 if (cc === ',' && !quote) { row.push(col.trim()); col = ''; continue; }
                 if (cc === '\n' && !quote) {
-                    if (col.trim() || row.length) {
-                        row.push(col.trim());
-                        arr.push(row);
-                    }
-                    row = []; col = '';
-                    continue;
+                    if (col.trim() || row.length) { row.push(col.trim()); arr.push(row); }
+                    row = []; col = ''; continue;
                 }
                 col += cc;
             }
-            if (col || row.length) {
-                row.push(col.trim());
-                arr.push(row);
-            }
+            if (col || row.length) { row.push(col.trim()); arr.push(row); }
             return arr;
         }
 
@@ -563,21 +354,16 @@
             if (!val) return 0;
             if (typeof val === 'number') return val;
             let str = val.toString().replace(/[R$\s]/g, '');
-            if (str.includes(',') && str.includes('.')) {
-                str = str.replace(/\./g, '').replace(',', '.');
-            } else if (str.includes(',')) {
-                str = str.replace(',', '.');
-            }
-            let num = parseFloat(str);
-            return isNaN(num) ? 0 : num;
+            if (str.includes(',') && str.includes('.')) { str = str.replace(/\./g, '').replace(',', '.'); } 
+            else if (str.includes(',')) { str = str.replace(',', '.'); }
+            let num = parseFloat(str); return isNaN(num) ? 0 : num;
         }
 
         async function fetchGoogleSheet(sheetName) {
             const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${sheetName}`;
             const response = await fetch(url);
-            if (!response.ok) throw new Error('Falha ao conectar com o Google Sheets');
-            const text = await response.text();
-            return parseCSV(text);
+            if (!response.ok) throw new Error('Falha na conexão');
+            return parseCSV(await response.text());
         }
 
         async function handleLogin() {
@@ -589,65 +375,48 @@
             
             if (!usernameInput) return;
 
-            btn.disabled = true;
-            spinner.style.display = 'block';
-            btnText.innerText = 'Calculando...';
-            errorElement.style.display = 'none';
+            btn.disabled = true; spinner.style.display = 'block'; btnText.innerText = 'Calculando...'; errorElement.style.display = 'none';
 
             try {
                 const loginData = await fetchGoogleSheet('login');
                 const userRow = loginData.find(row => row[0] && row[0].toLowerCase() === usernameInput);
-                
-                if (!userRow) {
-                    throw new Error("Usuário não encontrado. Verifique se digitou corretamente.");
-                }
+                if (!userRow) throw new Error("Usuário não encontrado.");
 
                 const taxaIluminacao = safeParseFloat(userRow[1]);
-
                 const invoicesData = await fetchGoogleSheet('Form_Responses');
                 invoicesData.shift(); 
 
                 allClientInvoices = [];
-                
                 for(let row of invoicesData) {
                     while(row.length < 7) row.push(""); 
-                    
-                    const proprietario = row[2] ? row[2].toLowerCase() : "";
-                    
-                    if (proprietario === usernameInput) {
-                        const consumoRaw = row[1];
-                        const consumoNum = safeParseFloat(consumoRaw);
+                    if ((row[2] ? row[2].toLowerCase() : "") === usernameInput) {
+                        const consumoNum = safeParseFloat(row[1]);
                         
-                        // 1. CÁLCULO DO PREÇO BRUTO (Sem Desconto)
                         const valorBruto = (consumoNum * 1.16) + taxaIluminacao;
+                        const valorCalculado = valorBruto * 0.80; 
+                        const descontoReais = valorBruto - valorCalculado;
                         
-                        // 2. CÁLCULO DO VALOR FINAL COBRADO (20% de Desconto sobre o Bruto)
-                        const valorCalculado = valorBruto * 0.80; // Dá exatamente 20% de desconto
-                        
-                        // Formatações financeiras
-                        const valorFormatado = valorCalculado.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-                        const valorBrutoFormatado = valorBruto.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-
-                        const statusRaw = row[6] ? row[6].toLowerCase() : "";
-                        const status = statusRaw.includes('pago') ? 'pago' : 'pendente';
-
                         allClientInvoices.push({
                             consumo: consumoNum.toString(),
-                            valor: valorFormatado,
-                            valorBruto: valorBrutoFormatado,
-                            data: row[3] || "--/--/----",
+                            valorNum: valorCalculado,
+                            valorBrutoNum: valorBruto,
+                            descontoNum: descontoReais,
+                            valor: valorCalculado.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }),
+                            valorBruto: valorBruto.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }),
+                            desconto: descontoReais.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }),
                             mes: row[4] || "Mês",
-                            link: row[5] || "",
-                            status: status
+                            status: (row[6] ? row[6].toLowerCase() : "").includes('pago') ? 'pago' : 'pendente'
                         });
                     }
                 }
-
                 allClientInvoices.reverse(); 
 
                 document.getElementById('login-screen').style.display = 'none';
                 document.getElementById('user-avatar').innerText = usernameInput.charAt(0);
-                document.getElementById('client-name').innerText = `@${usernameInput}`;
+                
+                // Nome sem o @
+                let capitalizedName = usernameInput.charAt(0).toUpperCase() + usernameInput.slice(1);
+                document.getElementById('client-name').innerText = capitalizedName;
                 
                 activeTab = 'pendente';
                 document.getElementById('tab-pendente').classList.add('active');
@@ -657,12 +426,9 @@
                 document.getElementById('dashboard-screen').style.display = 'block';
 
             } catch (error) {
-                errorElement.innerText = error.message;
-                errorElement.style.display = 'block';
+                errorElement.innerText = error.message; errorElement.style.display = 'block';
             } finally {
-                btn.disabled = false;
-                spinner.style.display = 'none';
-                btnText.innerText = 'Acessar Plataforma';
+                btn.disabled = false; spinner.style.display = 'none'; btnText.innerText = 'Acessar Plataforma';
             }
         }
 
@@ -676,48 +442,34 @@
         function renderFilteredInvoices() {
             const container = document.getElementById('invoice-list-container');
             container.innerHTML = '';
+            currentFilteredInvoices = allClientInvoices.filter(item => item.status === activeTab);
 
-            const filtered = allClientInvoices.filter(item => item.status === activeTab);
-
-            if (filtered.length === 0) {
-                const message = activeTab === 'pendente' 
-                    ? '🎉 Parabéns! Nenhuma fatura pendente por aqui.' 
-                    : 'Nenhum histórico de fatura paga encontrado.';
+            if (currentFilteredInvoices.length === 0) {
+                const message = activeTab === 'pendente' ? '🎉 Parabéns! Nenhuma fatura pendente por aqui.' : 'Nenhum histórico de fatura paga.';
                 container.innerHTML = `<div class="empty-state">${message}</div>`;
                 return;
             }
 
-            filtered.forEach(item => {
+            currentFilteredInvoices.forEach((item, index) => {
                 const isPaid = item.status === 'pago';
                 const statusClass = isPaid ? 'pago' : 'pendente';
                 const statusLabel = isPaid ? 'Pago' : 'Pendente';
-                
-                const hasLink = item.link && item.link.trim() !== '' && item.link.trim() !== 'l';
-                const linkAttr = hasLink ? `href="${item.link}" target="_blank"` : 'href="#" onclick="return false;"';
-                const linkClass = hasLink ? 'download-link' : 'download-link disabled';
-                const linkText = hasLink ? 'Baixar Fatura PDF' : 'Fatura Indisponível';
 
+                // Adicionado onclick="openModal(index)" na div inteira
                 const itemHtml = `
-                    <div class="invoice-item">
+                    <div class="invoice-item" onclick="openModal(${index})">
                         <div class="invoice-details">
                             <span class="invoice-month">${item.mes}</span>
-                            <span class="invoice-meta">Vencimento: ${item.data}</span>
                             <span class="invoice-meta" style="color: #fff;">Consumo: <strong>${item.consumo} kWh</strong></span>
+                            <span class="invoice-meta" style="color: var(--primary); font-size: 11px; font-weight: 600; margin-top:4px;">VER DETALHES ➔</span>
                         </div>
                         <div class="invoice-right">
-                            
-                            <!-- ESTRATÉGIA DE MARKETING (Preço âncora + Desconto) -->
                             <div class="pricing-block">
                                 <span class="discount-badge">Economia de 20%</span>
                                 <span class="invoice-price-old">${item.valorBruto}</span>
                                 <span class="invoice-price-new">${item.valor}</span>
                             </div>
-
                             <span class="status-badge ${statusClass}">${statusLabel}</span>
-                            <a ${linkAttr} class="${linkClass}">
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-                                ${linkText}
-                            </a>
                         </div>
                     </div>
                 `;
@@ -725,11 +477,77 @@
             });
         }
 
+        // ================= FUNÇÕES DO MODAL =================
+        function openModal(index) {
+            const invoice = currentFilteredInvoices[index];
+            const isPaid = invoice.status === 'pago';
+
+            // Preenche os dados
+            document.getElementById('modal-title').innerText = `Fatura ${invoice.mes}`;
+            
+            const badge = document.getElementById('modal-status');
+            badge.innerText = isPaid ? 'PAGO' : 'PENDENTE';
+            badge.className = `status-badge ${isPaid ? 'pago' : 'pendente'}`;
+
+            document.getElementById('modal-valor-final').innerText = invoice.valor;
+            document.getElementById('modal-consumo').innerText = `${invoice.consumo} kWh`;
+            document.getElementById('modal-valor-bruto').innerText = invoice.valorBruto;
+            document.getElementById('modal-economia').innerText = `- ${invoice.desconto}`; // Mostra o desconto em reais
+
+            // Lógica de Pagamento
+            if(isPaid) {
+                document.getElementById('modal-paid-msg').style.display = 'block';
+                document.getElementById('modal-payment-section').style.display = 'none';
+            } else {
+                document.getElementById('modal-paid-msg').style.display = 'none';
+                document.getElementById('modal-payment-section').style.display = 'block';
+                
+                // Gera o QR Code dinamicamente para o código PIX fixo
+                document.getElementById('qrcode').innerHTML = "";
+                new QRCode(document.getElementById("qrcode"), {
+                    text: PIX_STRING,
+                    width: 160,
+                    height: 160,
+                    colorDark : "#000000",
+                    colorLight : "#ffffff",
+                    correctLevel : QRCode.CorrectLevel.M
+                });
+                
+                // Reseta botão copia e cola
+                document.getElementById('pix-btn-text').innerText = "Copiar Pix Copia e Cola";
+            }
+
+            // Exibe o modal
+            document.getElementById('modal-overlay').style.display = 'block';
+            // Pequeno delay para a transição do CSS funcionar (transform: translateY)
+            setTimeout(() => {
+                document.getElementById('modal-overlay').style.opacity = '1';
+                document.getElementById('bottom-sheet').style.transform = 'translateY(0)';
+            }, 10);
+        }
+
+        function closeModal() {
+            document.getElementById('bottom-sheet').style.transform = 'translateY(100%)';
+            document.getElementById('modal-overlay').style.opacity = '0';
+            setTimeout(() => {
+                document.getElementById('modal-overlay').style.display = 'none';
+            }, 300);
+        }
+
+        function copyPix() {
+            navigator.clipboard.writeText(PIX_STRING).then(() => {
+                document.getElementById('pix-btn-text').innerText = "Copiado! 🎉";
+                setTimeout(() => {
+                    document.getElementById('pix-btn-text').innerText = "Copiar Pix Copia e Cola";
+                }, 3000);
+            });
+        }
+
         function handleLogout() {
             document.getElementById('dashboard-screen').style.display = 'none';
             document.getElementById('username-input').value = '';
             document.getElementById('login-screen').style.display = 'flex';
-            allClientInvoices = [];
+            allClientInvoices = []; currentFilteredInvoices = [];
         }
     </script>
 </body>
