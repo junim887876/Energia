@@ -8,7 +8,6 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
     <script>
         tailwind.config = {
@@ -26,6 +25,11 @@
         }
     </script>
     <style>
+        /* Desativa o zoom no duplo clique (muito comum em mobile) */
+        html, body {
+            touch-action: manipulation;
+        }
+        
         body {
             background-color: #141824; color: white; -webkit-tap-highlight-color: transparent;
             overflow-y: auto; overflow-x: hidden;
@@ -55,7 +59,9 @@
             position: relative; z-index: 10; width: 100%; max-width: 430px;
             margin: 0 auto; min-height: 100vh; display: flex; flex-direction: column;
         }
-        .hero-spacer { height: 48vh; width: 100%; pointer-events: none; }
+        
+        /* Ajustado para exibir melhor as faturas no celular sem esconder a casa */
+        .hero-spacer { height: 42vh; width: 100%; pointer-events: none; flex-shrink: 0; }
         
         .fade-in { animation: fadeIn 0.4s ease-out forwards; opacity: 0; }
         @keyframes fadeIn { to { opacity: 1; transform: translateY(0); } from { opacity: 0; transform: translateY(10px); } }
@@ -121,7 +127,7 @@
     <!-- FUNDO 3D -->
     <div id="canvas-container" class="bg-night"></div>
 
-    <!-- AR OVERLAYS (Vinculados ao 3D e aos dados) -->
+    <!-- AR OVERLAYS -->
     <div id="ar-pv" class="ar-overlay hidden">
         <div class="font-bold text-white text-sm" style="text-shadow: 0 2px 4px rgba(0,0,0,0.8);">PV <span class="text-app-green"><i class="fa-solid fa-bolt"></i></span></div>
         <div class="text-xl font-light text-white leading-none drop-shadow-md"><span class="font-bold" id="ar-consumo">0</span> kWh</div>
@@ -145,18 +151,16 @@
                         <p class="text-[10px] text-gray-400 mt-0.5 font-medium">Usina Sincronizada</p>
                     </div>
                 </button>
-                <button onclick="handleLogout()" class="w-10 h-10 rounded-full glass-panel bg-black/40 flex items-center justify-center pointer-events-auto border-white/10 active:scale-90">
-                    <i class="fa-solid fa-power-off text-gray-300"></i>
-                </button>
             </header>
 
             <div class="hero-spacer"></div>
 
-            <div class="flex-1 bg-[#141824] rounded-t-3xl p-5 pt-6 z-20 pb-28 fade-in relative border-t border-white/5 shadow-[0_-20px_40px_rgba(0,0,0,0.5)]">
+            <!-- TELA DE INÍCIO (FATURAS) -->
+            <div id="home-view" class="flex-1 bg-[#141824] rounded-t-3xl p-5 pt-6 z-20 pb-28 fade-in relative border-t border-white/5 shadow-[0_-20px_40px_rgba(0,0,0,0.5)]">
                 
-                <!-- Perfil Cliente -->
+                <!-- Perfil Cliente Reduzido com Imagem Elegante -->
                 <div class="glass-panel p-4 flex items-center gap-4 mb-6 bg-[#1a202c]">
-                    <div id="user-avatar" class="w-12 h-12 rounded-full bg-gradient-to-br from-[#ffdb4d] to-[#ff9e00] flex items-center justify-center text-black font-bold text-xl uppercase shadow-lg">U</div>
+                    <img src="https://images.unsplash.com/photo-1614850523459-c2f4c699c52e?w=256&h=256&fit=crop&q=80" alt="Avatar Premium" class="w-12 h-12 rounded-full object-cover border-[1.5px] border-app-orange shadow-[0_0_12px_rgba(255,158,0,0.3)]">
                     <div>
                         <h2 id="client-name" class="text-lg font-bold capitalize leading-tight">Cliente</h2>
                         <p class="text-xs text-gray-400 font-medium">Cliente SolarInvest</p>
@@ -178,11 +182,47 @@
                 </div>
             </div>
 
+            <!-- TELA DE PERFIL -->
+            <div id="profile-view" class="hidden flex-1 bg-[#141824] rounded-t-3xl p-5 pt-10 z-20 pb-28 fade-in relative border-t border-white/5 shadow-[0_-20px_40px_rgba(0,0,0,0.5)] flex flex-col items-center">
+                
+                <!-- Imagem Elegante Grande no Perfil -->
+                <img src="https://images.unsplash.com/photo-1614850523459-c2f4c699c52e?w=256&h=256&fit=crop&q=80" alt="Avatar Premium" class="w-24 h-24 rounded-full object-cover border-2 border-app-orange shadow-[0_0_20px_rgba(255,158,0,0.4)] mb-4">
+                
+                <h2 id="profile-name-large" class="text-2xl font-bold capitalize mb-1">Cliente</h2>
+                <p class="text-sm text-gray-400 font-medium mb-8">Conta SolarInvest Premium</p>
+                
+                <div class="w-full bg-white/5 rounded-2xl p-5 mb-6 border border-white/5">
+                    <div class="flex justify-between items-center mb-4 pb-4 border-b border-white/5">
+                        <span class="text-gray-400 text-sm">Taxa de Iluminação (CIP)</span>
+                        <span id="profile-cip" class="font-bold">R$ 0,00</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-gray-400 text-sm">Status do Sistema</span>
+                        <span class="text-app-green font-bold text-sm flex items-center gap-2">
+                            <div class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
+                            Sincronizado
+                        </span>
+                    </div>
+                </div>
+
+                <a href="https://wa.me/5562984099756?text=Preciso%20de%20ajuda%20com%20meu%20perfil%20SolarInvest" target="_blank" class="w-full bg-white/5 text-white border border-white/10 rounded-xl py-4 font-bold flex items-center justify-center gap-2 active:scale-95 transition-transform mb-3">
+                    <i class="fa-solid fa-headset"></i> Suporte ao Cliente
+                </a>
+
+                <button onclick="handleLogout()" class="w-full bg-app-red/10 text-app-red border border-app-red/20 rounded-xl py-4 font-bold flex items-center justify-center gap-2 active:scale-95 transition-transform mt-auto">
+                    <i class="fa-solid fa-power-off"></i> Sair da Conta
+                </button>
+            </div>
+
             <!-- Navbar Inferior -->
             <nav class="fixed bottom-0 w-full max-w-[430px] bg-[#141824] border-t border-white/5 p-3 pb-6 flex justify-around items-center z-30">
-                <button class="flex flex-col items-center text-white"><i class="fa-solid fa-house mb-1 text-lg"></i><span class="text-[10px] font-medium">Início</span></button>
-                <button class="flex flex-col items-center text-gray-500"><i class="fa-solid fa-file-invoice-dollar mb-1 text-lg"></i><span class="text-[10px] font-medium">Faturas</span></button>
-                <button class="flex flex-col items-center text-gray-500"><i class="fa-regular fa-user mb-1 text-lg"></i><span class="text-[10px] font-medium">Perfil</span></button>
+                <button id="nav-home" onclick="switchNav('home')" class="flex flex-col items-center text-white transition-colors w-1/2">
+                    <i class="fa-solid fa-house mb-1 text-lg"></i><span class="text-[10px] font-medium">Início</span>
+                </button>
+                <div class="w-[1px] h-8 bg-white/10"></div> <!-- Divisor -->
+                <button id="nav-profile" onclick="switchNav('profile')" class="flex flex-col items-center text-gray-500 transition-colors w-1/2">
+                    <i class="fa-regular fa-user mb-1 text-lg"></i><span class="text-[10px] font-medium">Perfil</span>
+                </button>
             </nav>
         </div>
     </div>
@@ -193,7 +233,13 @@
         <div class="modal-pill"></div>
         <div class="flex justify-between items-center mb-5">
             <h3 id="modal-title" class="text-xl font-bold">Fatura Mês</h3>
-            <span id="modal-status" class="text-[10px] font-bold px-2 py-1 rounded uppercase tracking-wider">STATUS</span>
+            <div class="flex items-center gap-4">
+                <span id="modal-status" class="text-[10px] font-bold px-2 py-1 rounded uppercase tracking-wider">STATUS</span>
+                <!-- Botão de Fechar Adicionado Aqui -->
+                <button onclick="closeModal()" class="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-gray-300 hover:text-white active:scale-90 transition-transform">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
         </div>
 
         <div class="bg-white/5 border border-white/5 rounded-2xl p-5 mb-5 text-center">
@@ -229,11 +275,9 @@
         </div>
 
         <div id="modal-payment-section" class="hidden">
-            <div class="bg-white p-3 rounded-2xl w-max mx-auto mb-4">
-                <div id="qrcode"></div>
-            </div>
-            <button onclick="copyPix()" class="w-full bg-app-green/15 text-app-green border border-app-green/30 rounded-xl py-3.5 font-bold flex items-center justify-center gap-2 active:scale-95 transition-transform mb-3">
-                <i class="fa-regular fa-copy"></i> <span id="pix-btn-text">Copiar Pix Copia e Cola</span>
+            <!-- Botão de copiar pix -->
+            <button onclick="copyPix()" class="w-full bg-app-green/15 text-app-green border border-app-green/30 rounded-xl py-4 font-bold flex items-center justify-center gap-2 active:scale-95 transition-transform mb-3">
+                <i class="fa-solid fa-copy text-lg"></i> <span id="pix-btn-text">Copiar Código PIX</span>
             </button>
         </div>
 
@@ -252,6 +296,15 @@
         let currentFilteredInvoices = [];
         let activeTab = 'pendente'; 
         let globalCip = 0;
+
+        // Auto-login (se já acessou antes no navegador)
+        window.onload = () => {
+            const savedUser = localStorage.getItem('solar_username');
+            if(savedUser) {
+                document.getElementById('username-input').value = savedUser;
+                handleLogin();
+            }
+        };
 
         function parseCSV(str) {
             const arr = []; let quote = false; let row = [], col = '';
@@ -306,6 +359,9 @@
 
                 globalCip = safeParseFloat(userRow[1]);
 
+                // Salva o login para as próximas visitas
+                localStorage.setItem('solar_username', usernameInput);
+
                 // 2. Busca Faturas
                 const invoicesData = await fetchGoogleSheet('Form_Responses');
                 invoicesData.shift(); // Remove header
@@ -316,7 +372,6 @@
                     if ((row[2] ? row[2].toLowerCase() : "") === usernameInput) {
                         const consumoNum = safeParseFloat(row[1]);
                         
-                        // Lógica de cálculo exata solicitada
                         const valorBruto = (consumoNum * TARIFA_KWH) + globalCip;
                         const valorCalculado = valorBruto * 0.80; // 20% desconto
                         const descontoReais = valorBruto - valorCalculado;
@@ -335,15 +390,17 @@
                 allClientInvoices.reverse(); 
 
                 // 3. Atualiza UI e Transição
-                document.getElementById('user-avatar').innerText = usernameInput.charAt(0);
+                // Atualiza Nomes
                 document.getElementById('client-name').innerText = usernameInput;
+                document.getElementById('profile-name-large').innerText = usernameInput;
+                document.getElementById('profile-cip').innerText = globalCip.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
                 
-                // Atualiza o AR Overlay com o último consumo (Ideia fora da caixa)
                 if(allClientInvoices.length > 0) {
                     document.getElementById('ar-consumo').innerText = allClientInvoices[0].consumo;
                 }
                 
-                switchTab('pendente'); // Renderiza lista
+                switchTab('pendente'); 
+                switchNav('home'); // Garante que abra na tela Início
 
                 // Fade out login, Start 3D
                 document.getElementById('login-screen').style.opacity = '0';
@@ -356,9 +413,31 @@
                 }, 500);
 
             } catch (error) {
+                // Se der erro, limpa o localStorage por precaução
+                localStorage.removeItem('solar_username');
                 errorElement.innerText = error.message; errorElement.classList.remove('hidden');
             } finally {
                 btn.disabled = false; spinner.style.display = 'none'; btnText.innerText = 'Acessar Plataforma';
+            }
+        }
+
+        // Lógica de Navegação Inferior
+        function switchNav(view) {
+            const homeView = document.getElementById('home-view');
+            const profileView = document.getElementById('profile-view');
+            const navHome = document.getElementById('nav-home');
+            const navProfile = document.getElementById('nav-profile');
+
+            if (view === 'home') {
+                homeView.classList.remove('hidden');
+                profileView.classList.add('hidden');
+                navHome.classList.replace('text-gray-500', 'text-white');
+                navProfile.classList.replace('text-white', 'text-gray-500');
+            } else if (view === 'profile') {
+                homeView.classList.add('hidden');
+                profileView.classList.remove('hidden');
+                navHome.classList.replace('text-white', 'text-gray-500');
+                navProfile.classList.replace('text-gray-500', 'text-white');
             }
         }
 
@@ -423,10 +502,7 @@
             } else {
                 document.getElementById('modal-paid-msg').classList.add('hidden');
                 document.getElementById('modal-payment-section').classList.remove('hidden');
-                
-                document.getElementById('qrcode').innerHTML = "";
-                new QRCode(document.getElementById("qrcode"), { text: PIX_STRING, width: 150, height: 150, colorDark: "#000", colorLight: "#fff", correctLevel: QRCode.CorrectLevel.M });
-                document.getElementById('pix-btn-text').innerText = "Copiar Pix Copia e Cola";
+                document.getElementById('pix-btn-text').innerText = "Copiar Código PIX";
             }
 
             document.getElementById('modal-overlay').style.display = 'block';
@@ -445,13 +521,17 @@
         function copyPix() {
             navigator.clipboard.writeText(PIX_STRING).then(() => {
                 document.getElementById('pix-btn-text').innerText = "Copiado! Abra seu banco";
-                setTimeout(() => { document.getElementById('pix-btn-text').innerText = "Copiar Pix Copia e Cola"; }, 3000);
+                setTimeout(() => { document.getElementById('pix-btn-text').innerText = "Copiar Código PIX"; }, 3000);
             });
         }
 
-        function handleLogout() { window.location.reload(); }
+        function handleLogout() {
+            // Remove o usuário salvo para forçar um novo login da próxima vez
+            localStorage.removeItem('solar_username');
+            window.location.reload(); 
+        }
 
-        // ================= MOTOR 3D MINUCIOSO =================
+        // ================= MOTOR 3D =================
         let scene, camera, renderer, ambientLight;
         let energyPath, energyDot, energyGlow;
         let pvPoint, r5Point; 
@@ -476,7 +556,7 @@
 
         function init3DHouse() {
             const container = document.getElementById('canvas-container');
-            if(container.children.length > 0) return; // Evita duplicar
+            if(container.children.length > 0) return; 
 
             scene = new THREE.Scene();
             const aspect = container.clientWidth / container.clientHeight;
@@ -562,7 +642,8 @@
             energyDot = new THREE.Mesh(new THREE.SphereGeometry(0.06, 16, 16), new THREE.MeshBasicMaterial({color: 0x00aaff}));
             energyGlow = new THREE.PointLight(0x00aaff, 1, 3); energyDot.add(energyGlow); houseGroup.add(energyDot);
 
-            houseGroup.position.set(0, -1.5, 0); scene.add(houseGroup);
+            // Casa reposicionada um pouco mais para cima para acomodar melhor a tela do celular
+            houseGroup.position.set(0, -1.0, 0); scene.add(houseGroup);
 
             function animate() {
                 requestAnimationFrame(animate);
