@@ -480,10 +480,9 @@
             dirLight.position.set(2, 12, 10); 
             scene.add(dirLight);
 
-            // Modelo 3D da Casa - Compatível com GitHub Pages e arquivos com espaços no nome
-            const modelFileName = encodeURIComponent('Casa & Carro por KatTie S - 8DFKst8XNAB.glb');
+            // Carregamento limpo do arquivo renomeado no GitHub
             const loader = new THREE.GLTFLoader();
-            loader.load('./' + modelFileName, (gltf) => {
+            loader.load('./casa.glb', (gltf) => {
                 const houseModel = gltf.scene;
                 houseModel.position.set(0, -1.2, 0);
                 houseModel.scale.set(0.85, 0.85, 0.85);
@@ -494,12 +493,9 @@
 
             buildUtilityPole();
 
-            // PONTO DE ANCORAGEM DO OVERLAY AR
-            // MANTIDAS AS SUAS COORDENADAS EXATAS
+            // COORDENADAS EXATAS SOLICITADAS
             pvPoint = new THREE.Vector3(-2, 6.5, 3); 
 
-            // TRAJETÓRIA DO FIO:
-            // MANTIDAS AS SUAS COORDENADAS EXATAS
             energyPath = new THREE.CatmullRomCurve3([
                 new THREE.Vector3(-6.5, 5.5, 1.1),   // Saída do poste
                 new THREE.Vector3(-4.2, 3.3, 1.15),  // Arco do cabo em suspensão no ar
