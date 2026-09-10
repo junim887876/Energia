@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SolarInvest</title>
+    <title>SolarInvest Premium</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
@@ -89,7 +89,7 @@
     <!-- FUNDO 3D INTERATIVO -->
     <div id="canvas-container" class="bg-night"></div>
 
-    <!-- AR OVERLAY (Texto perfeitamente legível no fundo escuro, com a linha apontando para a casa) -->
+    <!-- AR OVERLAY -->
     <div id="ar-pv" class="ar-overlay hidden" style="transform: translate(-100%, -50%);">
         <div class="bg-black/40 backdrop-blur-md p-2.5 rounded-xl border border-white/10">
             <div class="font-bold text-white text-xs flex items-center gap-1.5 drop-shadow">
@@ -98,7 +98,6 @@
             <div class="text-2xl font-black text-white leading-none tracking-tight my-0.5 drop-shadow"><span id="ar-consumo">0</span> kWh</div>
             <div class="text-[10px] text-gray-300 font-medium drop-shadow">Último Ciclo</div>
         </div>
-        <!-- Linha indicadora conectando o texto ao ponto da casa -->
         <div class="ar-line" style="height: 60px; left: 100%; top: 50%; transform: rotate(-30deg);"></div>
     </div>
 
@@ -160,11 +159,11 @@
         </div>
     </div>
 
-    <!-- MODAL INFERIOR -->
+    <!-- MODAL INFERIOR DETALHADO -->
     <div class="modal-overlay" id="modal-overlay" onclick="closeModal()"></div>
     <div class="bottom-sheet" id="bottom-sheet">
         <div class="modal-pill"></div>
-        <div class="flex justify-between items-center mb-5">
+        <div class="flex justify-between items-center mb-4">
             <h3 id="modal-title" class="text-xl font-bold">Fatura Mês</h3>
             <div class="flex items-center gap-4">
                 <span id="modal-status" class="text-[10px] font-bold px-2 py-1 rounded uppercase tracking-wider">STATUS</span>
@@ -173,10 +172,37 @@
                 </button>
             </div>
         </div>
-        <div class="bg-white/5 border border-white/5 rounded-2xl p-5 mb-5 text-center">
-            <h4 class="text-xs text-gray-400 font-medium mb-1">Valor a Pagar (com 20% OFF)</h4>
+
+        <!-- DEMONSTRATIVO MINUCIOSO DE CUSTOS -->
+        <div class="bg-white/5 border border-white/5 rounded-2xl p-4 mb-4 space-y-2 text-sm">
+            <div class="flex justify-between items-center text-gray-300">
+                <span>Consumo do Mês:</span>
+                <span id="modal-kwh" class="font-semibold text-white">0 kWh</span>
+            </div>
+            <div class="flex justify-between items-center text-gray-300">
+                <span>Custo de Energia (<span id="modal-tarifa-kwh">R$ 0,81</span>/kWh):</span>
+                <span id="modal-custo-kwh" class="font-semibold text-white">R$ 0,00</span>
+            </div>
+            <div class="flex justify-between items-center text-gray-300">
+                <span>Taxa de Iluminação (CIP):</span>
+                <span id="modal-cip" class="font-semibold text-white">R$ 0,00</span>
+            </div>
+            <div class="border-t border-white/10 my-2 pt-2 flex justify-between items-center text-gray-400">
+                <span>Valor Bruto Sem Desconto:</span>
+                <span id="modal-valor-bruto" class="line-through text-app-red font-medium">R$ 0,00</span>
+            </div>
+            <div class="flex justify-between items-center text-app-green font-medium">
+                <span>Desconto Aplicado (20% OFF):</span>
+                <span id="modal-desconto">- R$ 0,00</span>
+            </div>
+        </div>
+
+        <!-- VALOR FINAL EM DESTAQUE -->
+        <div class="bg-gradient-to-br from-white/5 to-white/10 border border-white/10 rounded-2xl p-4 mb-5 text-center">
+            <h4 class="text-xs text-gray-400 font-medium mb-1">Valor Final a Pagar</h4>
             <h2 id="modal-valor-final" class="text-4xl font-black bg-gradient-to-r from-[#ffdb4d] to-[#ff9e00] text-transparent bg-clip-text tracking-tighter">R$ 0,00</h2>
         </div>
+
         <div id="modal-paid-msg" class="hidden text-center text-app-green font-bold p-4 bg-app-green/10 rounded-xl border border-app-green/20">
             <i class="fa-solid fa-circle-check"></i> Esta fatura já está paga!
         </div>
@@ -267,16 +293,19 @@
                     while(row.length < 7) row.push(""); 
                     if ((row[2] ? row[2].toLowerCase() : "") === usernameInput) {
                         const consumoNum = safeParseFloat(row[1]);
-                        const valorBruto = (consumoNum * TARIFA_KWH) + globalCip;
+                        const custoKwhNum = consumoNum * TARIFA_KWH;
+                        const valorBruto = custoKwhNum + globalCip;
                         const valorCalculado = valorBruto * 0.80;
                         const descontoReais = valorBruto - valorCalculado;
                         
                         allClientInvoices.push({
                             consumo: consumoNum.toString(),
+                            custoKwhStr: custoKwhNum.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }),
                             valorBrutoNum: valorBruto,
                             valor: valorCalculado.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }),
                             valorBruto: valorBruto.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }),
                             desconto: descontoReais.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }),
+                            cipStr: globalCip.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }),
                             mes: row[4] || "Mês",
                             status: (row[6] ? row[6].toLowerCase() : "").includes('pago') ? 'pago' : 'pendente'
                         });
@@ -377,6 +406,12 @@
             badge.innerText = isPaid ? 'PAGO' : 'PENDENTE';
             badge.className = `text-[10px] font-bold px-2 py-1 rounded border uppercase ${isPaid ? 'text-app-green bg-app-green/10 border-app-green/20' : 'text-app-orange bg-app-orange/10 border-app-orange/20'}`;
 
+            // Preenchimento dos dados minuciosos
+            document.getElementById('modal-kwh').innerText = `${invoice.consumo} kWh`;
+            document.getElementById('modal-custo-kwh').innerText = invoice.custoKwhStr;
+            document.getElementById('modal-cip').innerText = invoice.cipStr;
+            document.getElementById('modal-valor-bruto').innerText = invoice.valorBruto;
+            document.getElementById('modal-desconto').innerText = `- ${invoice.desconto}`;
             document.getElementById('modal-valor-final').innerText = invoice.valor;
             
             if(isPaid) {
@@ -426,19 +461,16 @@
             const metalMat = new THREE.MeshStandardMaterial({ color: 0x777777, metalness: 0.7, roughness: 0.3 });
             const glassMat = new THREE.MeshStandardMaterial({ color: 0xeeeeee, roughness: 0.1 });
 
-            // Poste de concreto/madeira no canto esquerdo
             const poleGeo = new THREE.CylinderGeometry(0.14, 0.20, 7.5, 12);
             const poleMesh = new THREE.Mesh(poleGeo, poleMat);
             poleMesh.position.set(-6.5, 2.0, 1.5);
             poleGroup.add(poleMesh);
 
-            // Cruzeta de topo
             const armGeo = new THREE.BoxGeometry(0.1, 0.1, 1.0);
             const armMesh = new THREE.Mesh(armGeo, metalMat);
             armMesh.position.set(-6.5, 5.4, 1.5);
             poleGroup.add(armMesh);
 
-            // Isoladores
             const isoGeo = new THREE.CylinderGeometry(0.05, 0.05, 0.15, 8);
             const iso1 = new THREE.Mesh(isoGeo, glassMat);
             iso1.position.set(-6.5, 5.52, 1.1);
@@ -480,7 +512,6 @@
             dirLight.position.set(2, 12, 10); 
             scene.add(dirLight);
 
-            // Carregamento limpo do arquivo renomeado no GitHub
             const loader = new THREE.GLTFLoader();
             loader.load('./casa.glb', (gltf) => {
                 const houseModel = gltf.scene;
@@ -493,7 +524,6 @@
 
             buildUtilityPole();
 
-            // COORDENADAS EXATAS SOLICITADAS
             pvPoint = new THREE.Vector3(-2, 6.5, 3); 
 
             energyPath = new THREE.CatmullRomCurve3([
@@ -502,7 +532,6 @@
                 new THREE.Vector3(-1.8, 2.5, 1.1)    // Ponto final de conexão na quina da casa
             ]);
 
-            // Tubo do cabo elétrico
             const tubeGeo = new THREE.TubeGeometry(energyPath, 64, 0.035, 8, false);
             tubeMaterial = new THREE.MeshBasicMaterial({
                 color: 0x00aaff,
@@ -512,13 +541,11 @@
             const wireMesh = new THREE.Mesh(tubeGeo, tubeMaterial);
             scene.add(wireMesh);
 
-            // Esfera de Corrente Elétrica
             energyDot = new THREE.Mesh(
                 new THREE.SphereGeometry(0.14, 16, 16),
                 new THREE.MeshBasicMaterial({ color: 0x00aaff })
             );
 
-            // Brilho Neon na corrente elétrica
             energyGlow = new THREE.PointLight(0x00aaff, 3.0, 4.0);
             energyDot.add(energyGlow);
             scene.add(energyDot);
