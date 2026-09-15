@@ -4,15 +4,9 @@
   "description": "Acompanhamento de consumo e faturas solares em tempo real.",
   "icons": [
     {
-      "src": "https://cdn-icons-png.flaticon.com/512/3222/3222791.png",
-      "type": "image/png",
-      "sizes": "192x192",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "https://cdn-icons-png.flaticon.com/512/3222/3222791.png",
-      "type": "image/png",
-      "sizes": "512x512",
+      "src": "./logo_nova.jpg",
+      "type": "image/jpeg",
+      "sizes": "192x192 512x512",
       "purpose": "any maskable"
     }
   ],
