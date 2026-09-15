@@ -4,6 +4,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>SolarInvest Premium</title>
+    
+    <!-- Configurações PWA (iOS e Android) -->
+    <link rel="manifest" href="./manifest.json">
+    <meta name="theme-color" content="#141824">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="SolarInvest">
+    <link rel="apple-touch-icon" href="./logo_nova.jpg">
+
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
@@ -67,10 +76,13 @@
 </head>
 <body>
 
-    <!-- LOGIN SCREEN -->
+    <!-- LOGIN SCREEN (CAPA DO APP) -->
     <div id="login-screen" class="fixed inset-0 z-50 bg-[#141824] flex flex-col justify-center items-center p-8 transition-opacity duration-500">
-        <div class="mb-8 text-center">
-            <i class="fa-solid fa-solar-panel text-5xl text-app-orange mb-4"></i>
+        <div class="mb-8 text-center flex flex-col items-center">
+            <!-- LOGOTIPO NA CAPA -->
+            <div class="p-1 rounded-2xl bg-gradient-to-b from-app-orange/40 to-transparent mb-4 shadow-[0_0_25px_rgba(255,158,0,0.25)]">
+                <img src="./logo_nova.jpg" alt="SolarInvest Logo" class="w-24 h-24 rounded-2xl object-cover border border-white/20">
+            </div>
             <h1 class="text-2xl font-bold mb-1">Área do Cliente</h1>
             <p class="text-sm text-gray-400">Acesse suas faturas e consumo</p>
         </div>
@@ -108,7 +120,7 @@
 
             <div id="home-view" class="flex-1 bg-[#141824] rounded-t-3xl p-5 pt-6 z-20 pb-28 fade-in relative border-t border-white/5 shadow-[0_-20px_40px_rgba(0,0,0,0.5)]">
                 <div class="glass-panel p-4 flex items-center gap-4 mb-6 bg-[#1a202c]">
-                    <img src="https://images.unsplash.com/photo-1614850523459-c2f4c699c52e?w=256&h=256&fit=crop&q=80" alt="Avatar Premium" class="w-12 h-12 rounded-full object-cover border-[1.5px] border-app-orange shadow-[0_0_12px_rgba(255,158,0,0.3)]">
+                    <img src="./logo_nova.jpg" alt="Logo SolarInvest" class="w-12 h-12 rounded-full object-cover border-[1.5px] border-app-orange shadow-[0_0_12px_rgba(255,158,0,0.3)]">
                     <div>
                         <h2 id="client-name" class="text-lg font-bold capitalize leading-tight">Cliente</h2>
                         <p class="text-xs text-gray-400 font-medium">Cliente SolarInvest</p>
@@ -127,7 +139,7 @@
             </div>
 
             <div id="profile-view" class="hidden flex-1 bg-[#141824] rounded-t-3xl p-5 pt-10 z-20 pb-28 fade-in relative border-t border-white/5 shadow-[0_-20px_40px_rgba(0,0,0,0.5)] flex flex-col items-center">
-                <img src="https://images.unsplash.com/photo-1614850523459-c2f4c699c52e?w=256&h=256&fit=crop&q=80" alt="Avatar Premium" class="w-24 h-24 rounded-full object-cover border-2 border-app-orange shadow-[0_0_20px_rgba(255,158,0,0.4)] mb-4">
+                <img src="./logo_nova.jpg" alt="Logo SolarInvest" class="w-24 h-24 rounded-full object-cover border-2 border-app-orange shadow-[0_0_20px_rgba(255,158,0,0.4)] mb-4">
                 <h2 id="profile-name-large" class="text-2xl font-bold capitalize mb-1">Cliente</h2>
                 <p class="text-sm text-gray-400 font-medium mb-8">Conta SolarInvest Premium</p>
                 <div class="w-full bg-white/5 rounded-2xl p-5 mb-6 border border-white/5">
@@ -406,7 +418,6 @@
             badge.innerText = isPaid ? 'PAGO' : 'PENDENTE';
             badge.className = `text-[10px] font-bold px-2 py-1 rounded border uppercase ${isPaid ? 'text-app-green bg-app-green/10 border-app-green/20' : 'text-app-orange bg-app-orange/10 border-app-orange/20'}`;
 
-            // Preenchimento dos dados minuciosos
             document.getElementById('modal-kwh').innerText = `${invoice.consumo} kWh`;
             document.getElementById('modal-custo-kwh').innerText = invoice.custoKwhStr;
             document.getElementById('modal-cip').innerText = invoice.cipStr;
@@ -527,9 +538,9 @@
             pvPoint = new THREE.Vector3(-2, 6.5, 3); 
 
             energyPath = new THREE.CatmullRomCurve3([
-                new THREE.Vector3(-6.5, 5.5, 1.1),   // Saída do poste
-                new THREE.Vector3(-4.2, 3.3, 1.15),  // Arco do cabo em suspensão no ar
-                new THREE.Vector3(-1.8, 2.5, 1.1)    // Ponto final de conexão na quina da casa
+                new THREE.Vector3(-6.5, 5.5, 1.1),  // Saída do poste
+                new THREE.Vector3(-4.2, 3.3, 1.15), // Arco do cabo em suspensão no ar
+                new THREE.Vector3(-1.8, 2.5, 1.1)   // Ponto final de conexão na quina da casa
             ]);
 
             const tubeGeo = new THREE.TubeGeometry(energyPath, 64, 0.035, 8, false);
@@ -583,6 +594,17 @@
             const x = (pos.x * .5 + .5) * window.innerWidth;
             const y = (pos.y * -.5 + .5) * window.innerHeight;
             el.style.display = 'flex'; el.style.left = `${x}px`; el.style.top = `${y}px`;
+        }
+    </script>
+
+    <!-- REGISTRO DO SERVICE WORKER PARA PWA -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                    .then(reg => console.log('SW registrado com sucesso:', reg.scope))
+                    .catch(err => console.error('Erro ao registrar SW:', err));
+            });
         }
     </script>
 </body>
