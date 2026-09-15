@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SolarInvest</title>
+    <title>SolarInvest Premium</title>
     
     <!-- Configurações PWA (iOS e Android) -->
     <link rel="manifest" href="./manifest.json">
@@ -48,15 +48,15 @@
         .glass-panel { background: rgba(30, 36, 48, 0.7); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 1.25rem; }
 
         #canvas-container { position: fixed; top: 0; left: 0; right: 0; height: 60vh; z-index: 1; pointer-events: auto; transition: background 1s ease; }
-        .bg-night { background: linear-gradient(to bottom, #1d3349 0%, #141824 100%) !important; }
-        .bg-day { background: linear-gradient(to bottom, #4da6ff 0%, #80bfff 100%) !important; }
+        .bg-night { background: linear-gradient(to bottom, #0d131d 0%, #141824 100%) !important; }
+        .bg-day { background: linear-gradient(to bottom, #38bdf8 0%, #bae6fd 100%) !important; }
 
         #content-wrapper { position: relative; z-index: 10; width: 100%; max-width: 430px; margin: 0 auto; min-height: 100vh; display: flex; flex-direction: column; }
         .hero-spacer { height: 42vh; width: 100%; pointer-events: none; flex-shrink: 0; }
         .fade-in { animation: fadeIn 0.4s ease-out forwards; opacity: 0; }
         @keyframes fadeIn { to { opacity: 1; transform: translateY(0); } from { opacity: 0; transform: translateY(10px); } }
 
-        /* Overlay AR posicionado perfeitamente fora do modelo */
+        /* Overlay AR */
         .ar-overlay { position: fixed; z-index: 5; pointer-events: none; color: #ccc; font-size: 12px; display: flex; flex-direction: column; align-items: flex-start; }
         .ar-line { width: 1px; background-color: rgba(255,255,255,0.6); position: absolute; left: 0; top: 0; transform-origin: top left; }
 
@@ -79,7 +79,6 @@
     <!-- LOGIN SCREEN (CAPA DO APP) -->
     <div id="login-screen" class="fixed inset-0 z-50 bg-[#141824] flex flex-col justify-center items-center p-8 transition-opacity duration-500">
         <div class="mb-8 text-center flex flex-col items-center">
-            <!-- LOGOTIPO NA CAPA -->
             <div class="p-1 rounded-2xl bg-gradient-to-b from-app-orange/40 to-transparent mb-4 shadow-[0_0_25px_rgba(255,158,0,0.25)]">
                 <img src="./logo_nova.jpg" alt="SolarInvest Logo" class="w-24 h-24 rounded-2xl object-cover border border-white/20">
             </div>
@@ -98,8 +97,8 @@
         <div class="absolute bottom-6 text-[10px] text-gray-500">Desenvolvido pelo FlowNest(IA)</div>
     </div>
 
-    <!-- FUNDO 3D INTERATIVO -->
-    <div id="canvas-container" class="bg-night"></div>
+    <!-- FUNDO 3D INTERATIVO (CÉU DINÂMICO) -->
+    <div id="canvas-container"></div>
 
     <!-- AR OVERLAY -->
     <div id="ar-pv" class="ar-overlay hidden" style="transform: translate(-100%, -50%);">
@@ -118,6 +117,7 @@
         <div id="content-wrapper">
             <div class="hero-spacer"></div>
 
+            <!-- VISÃO INÍCIO -->
             <div id="home-view" class="flex-1 bg-[#141824] rounded-t-3xl p-5 pt-6 z-20 pb-28 fade-in relative border-t border-white/5 shadow-[0_-20px_40px_rgba(0,0,0,0.5)]">
                 <div class="glass-panel p-4 flex items-center gap-4 mb-6 bg-[#1a202c]">
                     <img src="./logo_nova.jpg" alt="Logo SolarInvest" class="w-12 h-12 rounded-full object-cover border-[1.5px] border-app-orange shadow-[0_0_12px_rgba(255,158,0,0.3)]">
@@ -138,10 +138,18 @@
                 <div class="glass-panel p-2 bg-[#1a202c]" id="invoice-list-container"></div>
             </div>
 
+            <!-- VISÃO PERFIL -->
             <div id="profile-view" class="hidden flex-1 bg-[#141824] rounded-t-3xl p-5 pt-10 z-20 pb-28 fade-in relative border-t border-white/5 shadow-[0_-20px_40px_rgba(0,0,0,0.5)] flex flex-col items-center">
                 <img src="./logo_nova.jpg" alt="Logo SolarInvest" class="w-24 h-24 rounded-full object-cover border-2 border-app-orange shadow-[0_0_20px_rgba(255,158,0,0.4)] mb-4">
                 <h2 id="profile-name-large" class="text-2xl font-bold capitalize mb-1">Cliente</h2>
-                <p class="text-sm text-gray-400 font-medium mb-8">Conta SolarInvest Premium</p>
+                <p class="text-sm text-gray-400 font-medium mb-6">Conta SolarInvest Premium</p>
+
+                <!-- BOTÃO INSTALAR PWA DENTRO DO PERFIL -->
+                <button id="pwa-install-btn" class="hidden w-full bg-app-orange/15 text-app-orange border border-app-orange/30 rounded-xl py-3.5 px-4 font-bold flex items-center justify-center gap-2 active:scale-95 transition-all mb-6 text-sm">
+                    <i class="fa-solid fa-mobile-screen-button text-lg"></i>
+                    Adicionar à Tela Inicial
+                </button>
+
                 <div class="w-full bg-white/5 rounded-2xl p-5 mb-6 border border-white/5">
                     <div class="flex justify-between items-center mb-4 pb-4 border-b border-white/5">
                         <span class="text-gray-400 text-sm">Taxa de Iluminação (CIP)</span>
@@ -154,11 +162,13 @@
                         </span>
                     </div>
                 </div>
+
                 <button onclick="handleLogout()" class="w-full bg-app-red/10 text-app-red border border-app-red/20 rounded-xl py-4 font-bold flex items-center justify-center gap-2 active:scale-95 transition-transform mt-auto">
                     <i class="fa-solid fa-power-off"></i> Sair da Conta
                 </button>
             </div>
 
+            <!-- NAVEGAÇÃO INFERIOR -->
             <nav class="fixed bottom-0 w-full max-w-[430px] bg-[#141824] border-t border-white/5 p-3 pb-6 flex justify-around items-center z-30">
                 <button id="nav-home" onclick="switchNav('home')" class="flex flex-col items-center text-white transition-colors w-1/2">
                     <i class="fa-solid fa-house mb-1 text-lg"></i><span class="text-[10px] font-medium">Início</span>
@@ -171,7 +181,7 @@
         </div>
     </div>
 
-    <!-- MODAL INFERIOR DETALHADO -->
+    <!-- MODAL DETALHADO -->
     <div class="modal-overlay" id="modal-overlay" onclick="closeModal()"></div>
     <div class="bottom-sheet" id="bottom-sheet">
         <div class="modal-pill"></div>
@@ -185,7 +195,6 @@
             </div>
         </div>
 
-        <!-- DEMONSTRATIVO MINUCIOSO DE CUSTOS -->
         <div class="bg-white/5 border border-white/5 rounded-2xl p-4 mb-4 space-y-2 text-sm">
             <div class="flex justify-between items-center text-gray-300">
                 <span>Consumo do Mês:</span>
@@ -209,7 +218,6 @@
             </div>
         </div>
 
-        <!-- VALOR FINAL EM DESTAQUE -->
         <div class="bg-gradient-to-br from-white/5 to-white/10 border border-white/10 rounded-2xl p-4 mb-5 text-center">
             <h4 class="text-xs text-gray-400 font-medium mb-1">Valor Final a Pagar</h4>
             <h2 id="modal-valor-final" class="text-4xl font-black bg-gradient-to-r from-[#ffdb4d] to-[#ff9e00] text-transparent bg-clip-text tracking-tighter">R$ 0,00</h2>
@@ -225,7 +233,7 @@
         </div>
     </div>
 
-    <!-- LÓGICA + MOTOR 3D -->
+    <!-- LÓGICA PRINCIPAL -->
     <script>
         const SHEET_ID = '1IxzUCFbGIxOMrCGnjfHNlB16ll64TKh75SDOV1oOnWw';
         const PIX_STRING = "00020126330014br.gov.bcb.pix0111709573141165204000053039865802BR5925JOSE ELVECIO LOPES JUNIOR6009Sao Paulo62230519daqr2210911952847046304402F";
@@ -235,8 +243,24 @@
         let currentFilteredInvoices = [];
         let activeTab = 'pendente'; 
         let globalCip = 0;
+        let isDay = true;
+
+        // VERIFICA SE É DIA OU NOITE COM BASE NO HORÁRIO LOCAL
+        function checkDayTime() {
+            const hours = new Date().getHours();
+            isDay = hours >= 6 && hours < 18;
+            const container = document.getElementById('canvas-container');
+            if (isDay) {
+                container.classList.remove('bg-night');
+                container.classList.add('bg-day');
+            } else {
+                container.classList.remove('bg-day');
+                container.classList.add('bg-night');
+            }
+        }
 
         window.onload = () => {
+            checkDayTime();
             const savedUser = localStorage.getItem('solar_username');
             if(savedUser) {
                 document.getElementById('username-input').value = savedUser;
@@ -463,7 +487,6 @@
         let scene, camera, renderer, ambientLight, controls;
         let energyPath, energyDot, energyGlow, tubeMaterial;
         let pvPoint; 
-        let isDay = false;
 
         function buildUtilityPole() {
             const poleGroup = new THREE.Group();
@@ -516,10 +539,13 @@
             controls.maxDistance = 25;
             controls.target.set(-0.5, 1.0, 0);
 
-            ambientLight = new THREE.AmbientLight(0xffffff, 0.85); 
+            // AJUSTE DE ILUMINAÇÃO DE ACORDO COM O DIA OU NOITE
+            const ambientIntensity = isDay ? 1.2 : 0.6;
+            ambientLight = new THREE.AmbientLight(0xffffff, ambientIntensity); 
             scene.add(ambientLight);
             
-            const dirLight = new THREE.DirectionalLight(0xffffff, 1.2); 
+            const dirIntensity = isDay ? 1.5 : 0.4;
+            const dirLight = new THREE.DirectionalLight(0xffffff, dirIntensity); 
             dirLight.position.set(2, 12, 10); 
             scene.add(dirLight);
 
@@ -539,8 +565,8 @@
 
             energyPath = new THREE.CatmullRomCurve3([
                 new THREE.Vector3(-6.5, 5.5, 1.1),  // Saída do poste
-                new THREE.Vector3(-4.2, 3.3, 1.15), // Arco do cabo em suspensão no ar
-                new THREE.Vector3(-1.8, 2.5, 1.1)   // Ponto final de conexão na quina da casa
+                new THREE.Vector3(-4.2, 3.3, 1.15), // Arco do cabo
+                new THREE.Vector3(-1.8, 2.5, 1.1)   // Conexão na casa
             ]);
 
             const tubeGeo = new THREE.TubeGeometry(energyPath, 64, 0.035, 8, false);
@@ -597,13 +623,35 @@
         }
     </script>
 
-    <!-- REGISTRO DO SERVICE WORKER PARA PWA -->
+    <!-- INSTALAÇÃO PWA E SERVICE WORKER -->
     <script>
+        let deferredPrompt;
+        const installBtn = document.getElementById('pwa-install-btn');
+
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            if (installBtn) installBtn.classList.remove('hidden');
+        });
+
+        if (installBtn) {
+            installBtn.addEventListener('click', async () => {
+                if (!deferredPrompt) return;
+                deferredPrompt.prompt();
+                const { outcome } = await deferredPrompt.userChoice;
+                if (outcome === 'accepted') {
+                    console.log('App instalado com sucesso');
+                }
+                deferredPrompt = null;
+                installBtn.classList.add('hidden');
+            });
+        }
+
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('./sw.js')
-                    .then(reg => console.log('SW registrado com sucesso:', reg.scope))
-                    .catch(err => console.error('Erro ao registrar SW:', err));
+                    .then(reg => console.log('SW registrado:', reg.scope))
+                    .catch(err => console.error('Erro SW:', err));
             });
         }
     </script>
