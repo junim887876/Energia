@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SolarInvest Cliente</title>
+    <title>SolarInvest Cl</title>
     
     <!-- Configurações PWA (iOS e Android) -->
     <link rel="manifest" href="./manifest.json">
@@ -22,15 +22,15 @@
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
 
-    <!-- OneSignal Web Push SDK Corrigido -->
+    <!-- OneSignal Web Push SDK Corrigido para GitHub Pages -->
     <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
     <script>
       window.OneSignalDeferred = window.OneSignalDeferred || [];
       OneSignalDeferred.push(async function(OneSignal) {
         await OneSignal.init({
           appId: "0b0d7b3c-ea10-4d49-9bdf-6e22de1e9d1f",
-          serviceWorkerPath: "Energia/sw.js",
-          serviceWorkerParam: { scope: "/Energia/" },
+          serviceWorkerPath: "sw.js",
+          serviceWorkerParam: { scope: "/" },
         });
       });
     </script>
@@ -69,7 +69,6 @@
         .fade-in { animation: fadeIn 0.4s ease-out forwards; opacity: 0; }
         @keyframes fadeIn { to { opacity: 1; transform: translateY(0); } from { opacity: 0; transform: translateY(10px); } }
 
-        /* Overlay AR */
         .ar-overlay { position: fixed; z-index: 5; pointer-events: none; color: #ccc; font-size: 12px; display: flex; flex-direction: column; align-items: flex-start; }
         .ar-line { width: 1px; background-color: rgba(255,255,255,0.6); position: absolute; left: 0; top: 0; transform-origin: top left; }
 
@@ -89,7 +88,7 @@
 </head>
 <body>
 
-    <!-- LOGIN SCREEN (CAPA DO APP) -->
+    <!-- LOGIN SCREEN -->
     <div id="login-screen" class="fixed inset-0 z-50 bg-[#141824] flex flex-col justify-center items-center p-8 transition-opacity duration-500">
         <div class="mb-8 text-center flex flex-col items-center">
             <div class="p-1 rounded-2xl bg-gradient-to-b from-app-orange/40 to-transparent mb-4 shadow-[0_0_25px_rgba(255,158,0,0.25)]">
@@ -110,7 +109,7 @@
         <div class="absolute bottom-6 text-[10px] text-gray-500">Desenvolvido pelo FlowNest(IA)</div>
     </div>
 
-    <!-- FUNDO 3D INTERATIVO (CÉU DINÂMICO) -->
+    <!-- FUNDO 3D INTERATIVO -->
     <div id="canvas-container"></div>
 
     <!-- AR OVERLAY -->
@@ -157,7 +156,6 @@
                 <h2 id="profile-name-large" class="text-2xl font-bold capitalize mb-1">Cliente</h2>
                 <p class="text-sm text-gray-400 font-medium mb-6">Conta SolarInvest Premium</p>
 
-                <!-- BOTÃO INSTALAR PWA DENTRO DO PERFIL -->
                 <button id="pwa-install-btn" class="hidden w-full bg-app-orange/15 text-app-orange border border-app-orange/30 rounded-xl py-3.5 px-4 font-bold flex items-center justify-center gap-2 active:scale-95 transition-all mb-6 text-sm">
                     <i class="fa-solid fa-mobile-screen-button text-lg"></i>
                     Adicionar à Tela Inicial
@@ -258,7 +256,6 @@
         let globalCip = 0;
         let isDay = true;
 
-        // VERIFICA SE É DIA OU NOITE COM BASE NO HORÁRIO LOCAL
         function checkDayTime() {
             const hours = new Date().getHours();
             isDay = hours >= 6 && hours < 18;
@@ -334,12 +331,10 @@
                 globalCip = safeParseFloat(userRow[1]);
                 localStorage.setItem('solar_username', usernameInput);
 
-                // --- IDENTIFICAÇÃO NO ONESIGNAL (EXTERNAL USER ID) ---
                 if (window.OneSignalDeferred) {
                     window.OneSignalDeferred.push(async function(OneSignal) {
                         try {
                             await OneSignal.login(usernameInput);
-                            console.log("Cliente autenticado no OneSignal como:", usernameInput);
                         } catch (err) {
                             console.error("Erro ao registrar External ID no OneSignal:", err);
                         }
@@ -513,7 +508,7 @@
             window.location.reload(); 
         }
 
-        // ================= MOTOR 3D =================
+        // MOTOR 3D
         let scene, camera, renderer, ambientLight, controls;
         let energyPath, energyDot, energyGlow, tubeMaterial;
         let pvPoint; 
@@ -569,7 +564,6 @@
             controls.maxDistance = 25;
             controls.target.set(-0.5, 1.0, 0);
 
-            // AJUSTE DE ILUMINAÇÃO DE ACORDO COM O DIA OU NOITE
             const ambientIntensity = isDay ? 1.2 : 0.6;
             ambientLight = new THREE.AmbientLight(0xffffff, ambientIntensity); 
             scene.add(ambientLight);
@@ -594,9 +588,9 @@
             pvPoint = new THREE.Vector3(-2, 6.5, 3); 
 
             energyPath = new THREE.CatmullRomCurve3([
-                new THREE.Vector3(-6.5, 5.5, 1.1),  // Saída do poste
-                new THREE.Vector3(-4.2, 3.3, 1.15), // Arco do cabo
-                new THREE.Vector3(-1.8, 2.5, 1.1)   // Conexão na casa
+                new THREE.Vector3(-6.5, 5.5, 1.1),
+                new THREE.Vector3(-4.2, 3.3, 1.15),
+                new THREE.Vector3(-1.8, 2.5, 1.1)
             ]);
 
             const tubeGeo = new THREE.TubeGeometry(energyPath, 64, 0.035, 8, false);
