@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SolarInvest m</title>
+    <title>SolarInvest Premium</title>
     
     <!-- Configurações PWA (iOS e Android) -->
     <link rel="manifest" href="./manifest.json">
@@ -22,14 +22,14 @@
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
 
-    <!-- OneSignal Web Push SDK (CORRIGIDO PARA GITHUB PAGES /Energia/) -->
+    <!-- OneSignal Web Push SDK Corrigido -->
     <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
     <script>
       window.OneSignalDeferred = window.OneSignalDeferred || [];
       OneSignalDeferred.push(async function(OneSignal) {
         await OneSignal.init({
           appId: "8ebe4bfc-cbea-48dd-a506-c8f2d031ee6f",
-          serviceWorkerPath: "sw.js",
+          serviceWorkerPath: "Energia/sw.js",
           serviceWorkerParam: { scope: "/Energia/" },
         });
       });
