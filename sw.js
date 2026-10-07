@@ -1,33 +1,30 @@
-importScripts("https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.sw.js");
+// Importa a SDK do OneSignal para funcionar dentro do Service Worker principal
+importScripts('https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.sw.js');
 
 const CACHE_NAME = 'solarinvest-energia-v1';
 
-const ASSETS_TO_CACHE = [
+// Apenas arquivos locais essenciais (removidos CDNs e sw.js da lista fixa)
+const LOCAL_ASSETS = [
   './',
   './index.html',
   './manifest.json',
-  './sw.js',
   './casa.glb',
-  './logo_nova.jpg',
-  'https://cdn.tailwindcss.com',
-  'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css',
-  'https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap',
-  'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js',
-  'https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js',
-  'https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js'
+  './logo_nova.jpg'
 ];
 
-// Instalação do Service Worker e Cache dos ficheiros
+// Instalação e Cache
 self.addEventListener('install', (e) => {
   self.skipWaiting();
   e.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(ASSETS_TO_CACHE);
+      return cache.addAll(LOCAL_ASSETS).catch((err) => {
+        console.warn('Aviso: Falha ao colocar arquivos no cache inicial:', err);
+      });
     })
   );
 });
 
-// Ativação e limpeza de caches antigos
+// Ativação e Limpeza de Caches Antigos
 self.addEventListener('activate', (e) => {
   e.waitUntil(
     caches.keys().then((cacheNames) => {
@@ -42,11 +39,21 @@ self.addEventListener('activate', (e) => {
   );
 });
 
-// Interceptação de requisições
+// Interceptação com estratégia Network-First e Fallback para Cache
 self.addEventListener('fetch', (e) => {
+  if (!e.request.url.startsWith('http')) return;
+
   e.respondWith(
-    fetch(e.request).catch(() => {
-      return caches.match(e.request);
-    })
+    fetch(e.request)
+      .then((networkResponse) => {
+        if (networkResponse && networkResponse.status === 200 && e.request.method === 'GET') {
+          const responseClone = networkResponse.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(e.request, responseClone));
+        }
+        return networkResponse;
+      })
+      .catch(() => {
+        return caches.match(e.request);
+      })
   );
 });
