@@ -29,7 +29,7 @@
       OneSignalDeferred.push(async function(OneSignal) {
         await OneSignal.init({
           appId: "8ebe4bfc-cbea-48dd-a506-c8f2d031ee6f",
-          serviceWorkerPath: "sw.js",
+          serviceWorkerPath: "Energia/sw.js",
           serviceWorkerParam: { scope: "/Energia/" },
         });
       });
@@ -653,7 +653,7 @@
         }
     </script>
 
-    <!-- INSTALAÇÃO PWA E SERVICE WORKER -->
+    <!-- INSTALAÇÃO PWA -->
     <script>
         let deferredPrompt;
         const installBtn = document.getElementById('pwa-install-btn');
@@ -674,14 +674,6 @@
                 }
                 deferredPrompt = null;
                 installBtn.classList.add('hidden');
-            });
-        }
-
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('./sw.js', { scope: '/Energia/' })
-                    .then(reg => console.log('SW registrado com sucesso:', reg.scope))
-                    .catch(err => console.error('Erro SW:', err));
             });
         }
     </script>
