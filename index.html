@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Solar Invest Cliente</title>
+    <title>SolarInvest Cl</title>
     
     <!-- Configurações PWA (iOS e Android) -->
     <link rel="manifest" href="./manifest.json">
@@ -131,25 +131,6 @@
 
             <!-- VISÃO INÍCIO -->
             <div id="home-view" class="flex-1 bg-[#141824] rounded-t-3xl p-5 pt-6 z-20 pb-28 fade-in relative border-t border-white/5 shadow-[0_-20px_40px_rgba(0,0,0,0.5)]">
-                
-                <!-- CARD FLUIDO DE ATIVAÇÃO DE NOTIFICAÇÕES -->
-                <div id="push-card" class="hidden glass-panel p-4 mb-4 bg-[#1a202c] border border-app-orange/30 transition-all duration-500">
-                    <div class="flex items-center justify-between gap-3">
-                        <div class="flex items-center gap-3">
-                            <div class="w-10 h-10 rounded-xl bg-app-orange/20 flex items-center justify-center text-app-orange shrink-0">
-                                <i class="fa-solid fa-bell text-lg"></i>
-                            </div>
-                            <div>
-                                <h4 class="text-sm font-bold text-white leading-tight">Ativar Notificações</h4>
-                                <p class="text-[11px] text-gray-400">Receba faturas assim que forem geradas.</p>
-                            </div>
-                        </div>
-                        <button onclick="solicitarPermissaoSuave()" class="bg-gradient-to-r from-[#ffdb4d] to-[#ff9e00] text-black text-xs font-bold px-4 py-2.5 rounded-xl active:scale-95 transition-all shadow-md shrink-0">
-                            Ativar
-                        </button>
-                    </div>
-                </div>
-
                 <div class="glass-panel p-4 flex items-center gap-4 mb-6 bg-[#1a202c]">
                     <img src="./logo_nova.jpg" alt="Logo SolarInvest" class="w-12 h-12 rounded-full object-cover border-[1.5px] border-app-orange shadow-[0_0_12px_rgba(255,158,0,0.3)]">
                     <div>
@@ -331,39 +312,6 @@
             return parseCSV(await response.text());
         }
 
-        // LÓGICA DE NOTIFICAÇÃO FLUIDA
-        function checarStatusPush() {
-            if ('Notification' in window) {
-                if (Notification.permission === 'default') {
-                    document.getElementById('push-card')?.classList.remove('hidden');
-                }
-            }
-        }
-
-        async function solicitarPermissaoSuave() {
-            const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-            const isPWA = window.matchMedia('(display-mode: standalone)').matches || navigator.standalone;
-
-            if (isIOS && !isPWA) {
-                alert("No iPhone, primeiro toque no ícone de Compartilhar ➔ 'Adicionar à Tela Inicial' para ativar as notificações.");
-                return;
-            }
-
-            if (window.OneSignalDeferred) {
-                window.OneSignalDeferred.push(async function(OneSignal) {
-                    await OneSignal.Notifications.requestPermission();
-                    
-                    if (Notification.permission !== 'default') {
-                        const card = document.getElementById('push-card');
-                        if (card) {
-                            card.style.opacity = '0';
-                            setTimeout(() => card.classList.add('hidden'), 500);
-                        }
-                    }
-                });
-            }
-        }
-
         async function handleLogin() {
             const usernameInput = document.getElementById('username-input').value.trim().toLowerCase();
             const errorElement = document.getElementById('login-error');
@@ -431,7 +379,6 @@
                 
                 switchTab('pendente'); 
                 switchNav('home');
-                checarStatusPush(); // Verifica se precisa mostrar o banner de notificação
 
                 document.getElementById('login-screen').style.opacity = '0';
                 setTimeout(() => {
