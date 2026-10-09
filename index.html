@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SolarInvest Cl</title>
+    <title>SolarInvest Cla</title>
     
     <!-- Configurações PWA (iOS e Android) -->
     <link rel="manifest" href="./manifest.json">
@@ -84,13 +84,51 @@
         
         .spinner { border: 3px solid rgba(255,255,255,0.1); width: 20px; height: 20px; border-radius: 50%; border-left-color: #fff; animation: spin 1s linear infinite; display: none; margin-right: 8px; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* NOTIFICAÇÃO ESTILO APPLE / IOS */
+        .apple-toast {
+            position: fixed;
+            top: 16px;
+            left: 50%;
+            transform: translateX(-50%) translateY(-120%);
+            z-index: 9999;
+            width: calc(100% - 32px);
+            max-width: 390px;
+            background: rgba(28, 28, 30, 0.85);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 0.5px solid rgba(255, 255, 255, 0.18);
+            border-radius: 22px;
+            padding: 12px 16px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.3s ease;
+            opacity: 0;
+            pointer-events: none;
+        }
+        .apple-toast.show {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
+            pointer-events: auto;
+        }
     </style>
 </head>
 <body>
 
-    <!-- BANNER INDICADOR OFFLINE -->
-    <div id="offline-banner" class="fixed top-0 left-0 right-0 z-[200] bg-app-red text-white text-[11px] font-bold py-1.5 px-4 text-center hidden shadow-md flex items-center justify-center gap-2">
-        <i class="fa-solid fa-wifi"></i> Você está offline. Exibindo dados salvos localmente.
+    <!-- NOTIFICAÇÃO ESTILO APPLE (OFFLINE / ONLINE) -->
+    <div id="apple-toast" class="apple-toast">
+        <div id="toast-icon-bg" class="w-9 h-9 rounded-full bg-red-500/20 flex items-center justify-center flex-shrink-0 text-app-red">
+            <i id="toast-icon" class="fa-solid fa-wifi-slash text-base"></i>
+        </div>
+        <div class="flex-1 min-w-0">
+            <h4 id="toast-title" class="text-xs font-bold text-white tracking-wide">Sem Conexão à Internet</h4>
+            <p id="toast-desc" class="text-[11px] text-gray-300 truncate">Você está navegando com os dados salvos.</p>
+        </div>
+        <button onclick="hideAppleToast()" class="text-gray-400 text-xs px-1 hover:text-white">
+            <i class="fa-solid fa-xmark"></i>
+        </button>
     </div>
 
     <!-- VIDEO INTRO SPLASH SCREEN -->
@@ -258,34 +296,69 @@
         </div>
     </div>
 
-    <!-- CONTROLE DE REDE ONLINE/OFFLINE -->
+    <!-- NOTIFICAÇÃO POP-UP ESTILO APPLE -->
     <script>
-        function checkNetworkStatus() {
-            const banner = document.getElementById('offline-banner');
+        let toastTimeout;
+
+        function showAppleToast(title, desc, isOnline = false) {
+            const toast = document.getElementById('apple-toast');
+            const toastTitle = document.getElementById('toast-title');
+            const toastDesc = document.getElementById('toast-desc');
+            const toastIconBg = document.getElementById('toast-icon-bg');
+            const toastIcon = document.getElementById('toast-icon');
+
+            toastTitle.innerText = title;
+            toastDesc.innerText = desc;
+
+            if (isOnline) {
+                toastIconBg.className = "w-9 h-9 rounded-full bg-green-500/20 flex items-center justify-center flex-shrink-0 text-app-green";
+                toastIcon.className = "fa-solid fa-wifi text-base";
+            } else {
+                toastIconBg.className = "w-9 h-9 rounded-full bg-red-500/20 flex items-center justify-center flex-shrink-0 text-app-red";
+                toastIcon.className = "fa-solid fa-wifi-slash text-base";
+            }
+
+            toast.classList.add('show');
+
+            clearTimeout(toastTimeout);
+            toastTimeout = setTimeout(() => {
+                hideAppleToast();
+            }, 4500);
+        }
+
+        function hideAppleToast() {
+            const toast = document.getElementById('apple-toast');
+            if (toast) toast.classList.remove('show');
+        }
+
+        function checkNetworkStatus(e) {
             const statusBadge = document.getElementById('connection-status-badge');
             const statusDot = document.getElementById('connection-dot');
             const statusText = document.getElementById('connection-text');
 
             if (!navigator.onLine) {
-                if(banner) banner.classList.remove('hidden');
                 if(statusBadge) {
                     statusBadge.className = "ml-auto bg-red-500/10 text-red-400 text-[10px] font-bold px-2 py-1 rounded border border-red-500/20 flex items-center gap-1";
                     statusDot.className = "w-1.5 h-1.5 rounded-full bg-red-500";
                     statusText.innerText = "Offline";
                 }
+                if (e && e.type === 'offline') {
+                    showAppleToast("Você está offline", "Exibindo faturas salvas localmente no dispositivo.", false);
+                }
             } else {
-                if(banner) banner.classList.add('hidden');
                 if(statusBadge) {
                     statusBadge.className = "ml-auto bg-green-500/10 text-green-400 text-[10px] font-bold px-2 py-1 rounded border border-green-500/20 flex items-center gap-1";
                     statusDot.className = "w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse";
                     statusText.innerText = "Online";
+                }
+                if (e && e.type === 'online') {
+                    showAppleToast("Conexão Reestabelecida", "Seus dados estão sincronizados com o servidor.", true);
                 }
             }
         }
 
         window.addEventListener('online', checkNetworkStatus);
         window.addEventListener('offline', checkNetworkStatus);
-        document.addEventListener('DOMContentLoaded', checkNetworkStatus);
     </script>
 
     <!-- CONTROLE DO VÍDEO INTRODUÇÃO -->
@@ -305,8 +378,6 @@
 
             if (introVideo) {
                 introVideo.addEventListener('ended', hideVideoSplash);
-
-                // Fallback de tempo de segurança (ex: 6s) para caso o evento 'ended' falhe no mobile
                 setTimeout(hideVideoSplash, 6000);
 
                 introVideo.play().catch(err => {
@@ -317,7 +388,7 @@
         });
     </script>
 
-    <!-- LÓGICA PRINCIPAL -->
+    <!-- LÓGICA PRINCIPAL COM LOGIN PERSISTENTE AUTOMÁTICO -->
     <script>
         const SHEET_ID = '1IxzUCFbGIxOMrCGnjfHNlB16ll64TKh75SDOV1oOnWw';
         const PIX_STRING = "00020126330014br.gov.bcb.pix0111709573141165204000053039865802BR5925JOSE ELVECIO LOPES JUNIOR6009Sao Paulo62230519daqr2210911952847046304402F";
@@ -342,12 +413,16 @@
             }
         }
 
+        // CARREGAMENTO AUTOMÁTICO DO LOGIN SALVO (EX: JUNIOR)
         window.onload = () => {
             checkDayTime();
+            checkNetworkStatus();
+
             const savedUser = localStorage.getItem('solar_username');
-            if(savedUser) {
+            if (savedUser) {
                 document.getElementById('username-input').value = savedUser;
-                handleLogin();
+                // Executa a autenticação automática sem exigir intervenção do usuário
+                handleLogin(true);
             }
         };
 
@@ -385,7 +460,7 @@
             return parseCSV(await response.text());
         }
 
-        async function handleLogin() {
+        async function handleLogin(isAutoLogin = false) {
             const usernameInput = document.getElementById('username-input').value.trim().toLowerCase();
             const errorElement = document.getElementById('login-error');
             const btn = document.getElementById('login-btn');
@@ -399,7 +474,7 @@
             try {
                 let loginData, invoicesData;
 
-                // SE TIVER ONLINE: Busca os dados na planilha e atualiza o localStorage
+                // SE TIVER ONLINE: Busca na planilha e sincroniza no cache
                 if (navigator.onLine) {
                     loginData = await fetchGoogleSheet('login');
                     invoicesData = await fetchGoogleSheet('Form_Responses');
@@ -407,7 +482,7 @@
                     localStorage.setItem(`cache_login_${usernameInput}`, JSON.stringify(loginData));
                     localStorage.setItem(`cache_invoices_${usernameInput}`, JSON.stringify(invoicesData));
                 } else {
-                    // SE TIVER OFFLINE: Carrega do cache salvo no localStorage
+                    // SE TIVER OFFLINE: Carrega dados do cache local do usuário
                     const localLogin = localStorage.getItem(`cache_login_${usernameInput}`);
                     const localInvoices = localStorage.getItem(`cache_invoices_${usernameInput}`);
                     
@@ -479,6 +554,10 @@
                     document.getElementById('dashboard-screen').classList.remove('hidden');
                     init3DHouse();
                     document.getElementById('ar-pv').classList.remove('hidden');
+
+                    if (!navigator.onLine && isAutoLogin) {
+                        showAppleToast("Modo Offline Ativo", `Sessão iniciada como "${usernameInput}".`, false);
+                    }
                 }, 500);
 
             } catch (error) {
