@@ -1,0 +1,711 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>SolarInvest Cla</title>
+    
+    <!-- Configurações PWA (iOS e Android) -->
+    <link rel="manifest" href="./manifest.json">
+    <meta name="theme-color" content="#141824">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="SolarInvest">
+    <link rel="apple-touch-icon" href="./logo_nova.jpg">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Three.js, GLTFLoader e OrbitControls -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+
+    <!-- OneSignal Web Push SDK Corrigido para GitHub Pages -->
+    <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
+    <script>
+      window.OneSignalDeferred = window.OneSignalDeferred || [];
+      OneSignalDeferred.push(async function(OneSignal) {
+        await OneSignal.init({
+          appId: "0b0d7b3c-ea10-4d49-9bdf-6e22de1e9d1f",
+          serviceWorkerPath: "sw.js",
+          serviceWorkerParam: { scope: "/" },
+        });
+      });
+    </script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                    colors: {
+                        'app-bg': '#141824',
+                        'app-green': '#30d158',
+                        'app-red': '#ff453a',
+                        'app-orange': '#ff9e00'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        html, body { touch-action: manipulation; }
+        body { background-color: #141824; color: white; -webkit-tap-highlight-color: transparent; overflow-y: auto; overflow-x: hidden; }
+        ::-webkit-scrollbar { display: none; }
+
+        .price-strike { position: relative; display: inline-block; color: #718096; }
+        .price-strike::after { content: ''; position: absolute; left: -5%; top: 50%; width: 110%; height: 2px; background: #ff453a; transform: rotate(-5deg); }
+
+        .glass-panel { background: rgba(30, 36, 48, 0.7); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 1.25rem; }
+
+        #canvas-container { position: fixed; top: 0; left: 0; right: 0; height: 60vh; z-index: 1; pointer-events: auto; transition: background 1s ease; }
+        .bg-night { background: linear-gradient(to bottom, #0d131d 0%, #141824 100%) !important; }
+        .bg-day { background: linear-gradient(to bottom, #38bdf8 0%, #bae6fd 100%) !important; }
+
+        #content-wrapper { position: relative; z-index: 10; width: 100%; max-width: 430px; margin: 0 auto; min-height: 100vh; display: flex; flex-direction: column; }
+        .hero-spacer { height: 42vh; width: 100%; pointer-events: none; flex-shrink: 0; }
+        .fade-in { animation: fadeIn 0.4s ease-out forwards; opacity: 0; }
+        @keyframes fadeIn { to { opacity: 1; transform: translateY(0); } from { opacity: 0; transform: translateY(10px); } }
+
+        .ar-overlay { position: fixed; z-index: 5; pointer-events: none; color: #ccc; font-size: 12px; display: flex; flex-direction: column; align-items: flex-start; }
+        .ar-line { width: 1px; background-color: rgba(255,255,255,0.6); position: absolute; left: 0; top: 0; transform-origin: top left; }
+
+        .tab-btn { transition: all 0.25s ease; }
+        .tab-btn.active { background: rgba(255, 255, 255, 0.15); color: #fff; box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
+        .invoice-item { border-bottom: 1px solid rgba(255, 255, 255, 0.05); cursor: pointer; transition: background 0.2s; }
+        .invoice-item:active { background: rgba(255, 255, 255, 0.05); border-radius: 12px; }
+        .invoice-item:last-child { border-bottom: none; }
+
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); z-index: 1000; display: none; opacity: 0; transition: opacity 0.3s ease; }
+        .bottom-sheet { position: fixed; bottom: 0; left: 0; width: 100%; background: #1a202c; border-top-left-radius: 28px; border-top-right-radius: 28px; padding: 20px 24px 34px; z-index: 1001; border-top: 1px solid rgba(255,255,255,0.1); transform: translateY(100%); transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1); max-height: 90vh; overflow-y: auto; box-shadow: 0 -10px 40px rgba(0,0,0,0.5); }
+        .modal-pill { width: 40px; height: 5px; background: rgba(255,255,255,0.2); border-radius: 10px; margin: 0 auto 20px; }
+        
+        .spinner { border: 3px solid rgba(255,255,255,0.1); width: 20px; height: 20px; border-radius: 50%; border-left-color: #fff; animation: spin 1s linear infinite; display: none; margin-right: 8px; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+
+    <!-- VIDEO INTRO SPLASH SCREEN -->
+    <div id="video-splash" class="fixed inset-0 z-[100] bg-black flex items-center justify-center transition-opacity duration-700">
+        <video id="intro-video" class="w-full h-full object-cover" autoplay muted playsinline>
+            <source src="./Improve_video_quality_20261008170930.mp4" type="video/mp4">
+            Seu navegador não suporta vídeos.
+        </video>
+    </div>
+
+    <!-- LOGIN SCREEN -->
+    <div id="login-screen" class="fixed inset-0 z-50 bg-[#141824] flex flex-col justify-center items-center p-8 transition-opacity duration-500">
+        <div class="mb-8 text-center flex flex-col items-center">
+            <div class="p-1 rounded-2xl bg-gradient-to-b from-app-orange/40 to-transparent mb-4 shadow-[0_0_25px_rgba(255,158,0,0.25)]">
+                <img src="./logo_nova.jpg" alt="SolarInvest Logo" class="w-24 h-24 rounded-2xl object-cover border border-white/20">
+            </div>
+            <h1 class="text-2xl font-bold mb-1">Área do Cliente</h1>
+            <p class="text-sm text-gray-400">Acesse suas faturas e consumo</p>
+        </div>
+        
+        <div class="w-full max-w-xs space-y-4">
+            <input type="text" id="username-input" placeholder="Seu Usuário" autocomplete="off" class="w-full bg-white/5 border border-white/10 rounded-xl px-6 py-4 text-center focus:outline-none focus:border-app-orange transition-colors" onkeypress="if(event.key === 'Enter') handleLogin()">
+            <button id="login-btn" onclick="handleLogin()" class="w-full bg-gradient-to-r from-[#ffdb4d] to-[#ff9e00] text-black font-bold py-4 rounded-xl active:scale-95 transition-transform flex justify-center items-center">
+                <div id="loading-spinner" class="spinner border-black/10 border-left-black"></div>
+                <span id="btn-text">Acessar Plataforma</span>
+            </button>
+            <p id="login-error" class="text-app-red text-sm text-center font-medium hidden">Usuário não encontrado.</p>
+        </div>
+        <div class="absolute bottom-6 text-[10px] text-gray-500">Desenvolvido pelo FlowNest(IA)</div>
+    </div>
+
+    <!-- FUNDO 3D INTERATIVO -->
+    <div id="canvas-container"></div>
+
+    <!-- AR OVERLAY -->
+    <div id="ar-pv" class="ar-overlay hidden" style="transform: translate(-100%, -50%);">
+        <div class="bg-black/40 backdrop-blur-md p-2.5 rounded-xl border border-white/10">
+            <div class="font-bold text-white text-xs flex items-center gap-1.5 drop-shadow">
+                <span>PV</span> <span class="text-app-green"><i class="fa-solid fa-bolt"></i></span>
+            </div>
+            <div class="text-2xl font-black text-white leading-none tracking-tight my-0.5 drop-shadow"><span id="ar-consumo">0</span> kWh</div>
+            <div class="text-[10px] text-gray-300 font-medium drop-shadow">Último Ciclo</div>
+        </div>
+        <div class="ar-line" style="height: 60px; left: 100%; top: 50%; transform: rotate(-30deg);"></div>
+    </div>
+
+    <!-- DASHBOARD -->
+    <div id="dashboard-screen" class="hidden">
+        <div id="content-wrapper">
+            <div class="hero-spacer"></div>
+
+            <!-- VISÃO INÍCIO -->
+            <div id="home-view" class="flex-1 bg-[#141824] rounded-t-3xl p-5 pt-6 z-20 pb-28 fade-in relative border-t border-white/5 shadow-[0_-20px_40px_rgba(0,0,0,0.5)]">
+                <div class="glass-panel p-4 flex items-center gap-4 mb-6 bg-[#1a202c]">
+                    <img src="./logo_nova.jpg" alt="Logo SolarInvest" class="w-12 h-12 rounded-full object-cover border-[1.5px] border-app-orange shadow-[0_0_12px_rgba(255,158,0,0.3)]">
+                    <div>
+                        <h2 id="client-name" class="text-lg font-bold capitalize leading-tight">Cliente</h2>
+                        <p class="text-xs text-gray-400 font-medium">Cliente SolarInvest</p>
+                    </div>
+                    <div class="ml-auto bg-green-500/10 text-green-400 text-[10px] font-bold px-2 py-1 rounded border border-green-500/20 flex items-center gap-1">
+                        <div class="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></div> Online
+                    </div>
+                </div>
+
+                <div class="flex bg-white/5 rounded-xl p-1 mb-4 border border-white/5">
+                    <button id="tab-pendente" class="tab-btn flex-1 text-sm font-semibold py-2.5 rounded-lg text-gray-400 active" onclick="switchTab('pendente')">Não Pagos</button>
+                    <button id="tab-pago" class="tab-btn flex-1 text-sm font-semibold py-2.5 rounded-lg text-gray-400" onclick="switchTab('pago')">Pagos</button>
+                </div>
+
+                <div class="glass-panel p-2 bg-[#1a202c]" id="invoice-list-container"></div>
+            </div>
+
+            <!-- VISÃO PERFIL -->
+            <div id="profile-view" class="hidden flex-1 bg-[#141824] rounded-t-3xl p-5 pt-10 z-20 pb-28 fade-in relative border-t border-white/5 shadow-[0_-20px_40px_rgba(0,0,0,0.5)] flex flex-col items-center">
+                <img src="./logo_nova.jpg" alt="Logo SolarInvest" class="w-24 h-24 rounded-full object-cover border-2 border-app-orange shadow-[0_0_20px_rgba(255,158,0,0.4)] mb-4">
+                <h2 id="profile-name-large" class="text-2xl font-bold capitalize mb-1">Cliente</h2>
+                <p class="text-sm text-gray-400 font-medium mb-6">Conta SolarInvest Premium</p>
+
+                <button id="pwa-install-btn" class="hidden w-full bg-app-orange/15 text-app-orange border border-app-orange/30 rounded-xl py-3.5 px-4 font-bold flex items-center justify-center gap-2 active:scale-95 transition-all mb-6 text-sm">
+                    <i class="fa-solid fa-mobile-screen-button text-lg"></i>
+                    Adicionar à Tela Inicial
+                </button>
+
+                <div class="w-full bg-white/5 rounded-2xl p-5 mb-6 border border-white/5">
+                    <div class="flex justify-between items-center mb-4 pb-4 border-b border-white/5">
+                        <span class="text-gray-400 text-sm">Taxa de Iluminação (CIP)</span>
+                        <span id="profile-cip" class="font-bold">R$ 0,00</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-gray-400 text-sm">Status do Sistema</span>
+                        <span class="text-app-green font-bold text-sm flex items-center gap-2">
+                            <div class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div> Sincronizado
+                        </span>
+                    </div>
+                </div>
+
+                <button onclick="handleLogout()" class="w-full bg-app-red/10 text-app-red border border-app-red/20 rounded-xl py-4 font-bold flex items-center justify-center gap-2 active:scale-95 transition-transform mt-auto">
+                    <i class="fa-solid fa-power-off"></i> Sair da Conta
+                </button>
+            </div>
+
+            <!-- NAVEGAÇÃO INFERIOR -->
+            <nav class="fixed bottom-0 w-full max-w-[430px] bg-[#141824] border-t border-white/5 p-3 pb-6 flex justify-around items-center z-30">
+                <button id="nav-home" onclick="switchNav('home')" class="flex flex-col items-center text-white transition-colors w-1/2">
+                    <i class="fa-solid fa-house mb-1 text-lg"></i><span class="text-[10px] font-medium">Início</span>
+                </button>
+                <div class="w-[1px] h-8 bg-white/10"></div>
+                <button id="nav-profile" onclick="switchNav('profile')" class="flex flex-col items-center text-gray-500 transition-colors w-1/2">
+                    <i class="fa-regular fa-user mb-1 text-lg"></i><span class="text-[10px] font-medium">Perfil</span>
+                </button>
+            </nav>
+        </div>
+    </div>
+
+    <!-- MODAL DETALHADO -->
+    <div class="modal-overlay" id="modal-overlay" onclick="closeModal()"></div>
+    <div class="bottom-sheet" id="bottom-sheet">
+        <div class="modal-pill"></div>
+        <div class="flex justify-between items-center mb-4">
+            <h3 id="modal-title" class="text-xl font-bold">Fatura Mês</h3>
+            <div class="flex items-center gap-4">
+                <span id="modal-status" class="text-[10px] font-bold px-2 py-1 rounded uppercase tracking-wider">STATUS</span>
+                <button onclick="closeModal()" class="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-gray-300 hover:text-white active:scale-90 transition-transform">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+        </div>
+
+        <div class="bg-white/5 border border-white/5 rounded-2xl p-4 mb-4 space-y-2 text-sm">
+            <div class="flex justify-between items-center text-gray-300">
+                <span>Consumo do Mês:</span>
+                <span id="modal-kwh" class="font-semibold text-white">0 kWh</span>
+            </div>
+            <div class="flex justify-between items-center text-gray-300">
+                <span>Custo de Energia (<span id="modal-tarifa-kwh">R$ 0,81</span>/kWh):</span>
+                <span id="modal-custo-kwh" class="font-semibold text-white">R$ 0,00</span>
+            </div>
+            <div class="flex justify-between items-center text-gray-300">
+                <span>Taxa de Iluminação (CIP):</span>
+                <span id="modal-cip" class="font-semibold text-white">R$ 0,00</span>
+            </div>
+            <div class="border-t border-white/10 my-2 pt-2 flex justify-between items-center text-gray-400">
+                <span>Valor Bruto Sem Desconto:</span>
+                <span id="modal-valor-bruto" class="line-through text-app-red font-medium">R$ 0,00</span>
+            </div>
+            <div class="flex justify-between items-center text-app-green font-medium">
+                <span>Desconto Aplicado (20% OFF):</span>
+                <span id="modal-desconto">- R$ 0,00</span>
+            </div>
+        </div>
+
+        <div class="bg-gradient-to-br from-white/5 to-white/10 border border-white/10 rounded-2xl p-4 mb-5 text-center">
+            <h4 class="text-xs text-gray-400 font-medium mb-1">Valor Final a Pagar</h4>
+            <h2 id="modal-valor-final" class="text-4xl font-black bg-gradient-to-r from-[#ffdb4d] to-[#ff9e00] text-transparent bg-clip-text tracking-tighter">R$ 0,00</h2>
+        </div>
+
+        <div id="modal-paid-msg" class="hidden text-center text-app-green font-bold p-4 bg-app-green/10 rounded-xl border border-app-green/20">
+            <i class="fa-solid fa-circle-check"></i> Esta fatura já está paga!
+        </div>
+        <div id="modal-payment-section" class="hidden">
+            <button onclick="copyPix()" class="w-full bg-app-green/15 text-app-green border border-app-green/30 rounded-xl py-4 font-bold flex items-center justify-center gap-2 active:scale-95 transition-transform mb-3">
+                <i class="fa-solid fa-copy text-lg"></i> <span id="pix-btn-text">Copiar Código PIX</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- CONTROLE DO VÍDEO INTRODUÇÃO -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const videoSplash = document.getElementById('video-splash');
+            const introVideo = document.getElementById('intro-video');
+
+            function hideVideoSplash() {
+                if (videoSplash) {
+                    videoSplash.style.opacity = '0';
+                    setTimeout(() => {
+                        videoSplash.style.display = 'none';
+                    }, 700);
+                }
+            }
+
+            if (introVideo) {
+                // Esconde o vídeo quando ele termina
+                introVideo.addEventListener('ended', hideVideoSplash);
+
+                // Fallback para caso o vídeo não consiga tocar ou falhe por algum bloqueio
+                introVideo.play().catch(err => {
+                    console.warn("Autoplay impedido ou falhou:", err);
+                    hideVideoSplash();
+                });
+            }
+        });
+    </script>
+
+    <!-- LÓGICA PRINCIPAL -->
+    <script>
+        const SHEET_ID = '1IxzUCFbGIxOMrCGnjfHNlB16ll64TKh75SDOV1oOnWw';
+        const PIX_STRING = "00020126330014br.gov.bcb.pix0111709573141165204000053039865802BR5925JOSE ELVECIO LOPES JUNIOR6009Sao Paulo62230519daqr2210911952847046304402F";
+        const TARIFA_KWH = 0.81;
+
+        let allClientInvoices = [];
+        let currentFilteredInvoices = [];
+        let activeTab = 'pendente'; 
+        let globalCip = 0;
+        let isDay = true;
+
+        function checkDayTime() {
+            const hours = new Date().getHours();
+            isDay = hours >= 6 && hours < 18;
+            const container = document.getElementById('canvas-container');
+            if (isDay) {
+                container.classList.remove('bg-night');
+                container.classList.add('bg-day');
+            } else {
+                container.classList.remove('bg-day');
+                container.classList.add('bg-night');
+            }
+        }
+
+        window.onload = () => {
+            checkDayTime();
+            const savedUser = localStorage.getItem('solar_username');
+            if(savedUser) {
+                document.getElementById('username-input').value = savedUser;
+                handleLogin();
+            }
+        };
+
+        function parseCSV(str) {
+            const arr = []; let quote = false; let row = [], col = '';
+            for (let c = 0; c < str.length; c++) {
+                let cc = str[c], nc = str[c+1];
+                if (cc === '\r') continue; 
+                if (cc === '"' && quote && nc === '"') { col += cc; ++c; continue; }
+                if (cc === '"') { quote = !quote; continue; }
+                if (cc === ',' && !quote) { row.push(col.trim()); col = ''; continue; }
+                if (cc === '\n' && !quote) {
+                    if (col.trim() || row.length) { row.push(col.trim()); arr.push(row); }
+                    row = []; col = ''; continue;
+                }
+                col += cc;
+            }
+            if (col || row.length) { row.push(col.trim()); arr.push(row); }
+            return arr;
+        }
+
+        function safeParseFloat(val) {
+            if (!val) return 0;
+            if (typeof val === 'number') return val;
+            let str = val.toString().replace(/[R$\s]/g, '');
+            if (str.includes(',') && str.includes('.')) { str = str.replace(/\./g, '').replace(',', '.'); } 
+            else if (str.includes(',')) { str = str.replace(',', '.'); }
+            let num = parseFloat(str); return isNaN(num) ? 0 : num;
+        }
+
+        async function fetchGoogleSheet(sheetName) {
+            const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${sheetName}`;
+            const response = await fetch(url);
+            if (!response.ok) throw new Error('Falha na conexão com servidor');
+            return parseCSV(await response.text());
+        }
+
+        async function handleLogin() {
+            const usernameInput = document.getElementById('username-input').value.trim().toLowerCase();
+            const errorElement = document.getElementById('login-error');
+            const btn = document.getElementById('login-btn');
+            const spinner = document.getElementById('loading-spinner');
+            const btnText = document.getElementById('btn-text');
+            
+            if (!usernameInput) return;
+
+            btn.disabled = true; spinner.style.display = 'block'; btnText.innerText = 'Buscando dados...'; errorElement.classList.add('hidden');
+
+            try {
+                const loginData = await fetchGoogleSheet('login');
+                const userRow = loginData.find(row => row[0] && row[0].toLowerCase() === usernameInput);
+                if (!userRow) throw new Error("Usuário não encontrado.");
+
+                globalCip = safeParseFloat(userRow[1]);
+                localStorage.setItem('solar_username', usernameInput);
+
+                if (window.OneSignalDeferred) {
+                    window.OneSignalDeferred.push(async function(OneSignal) {
+                        try {
+                            await OneSignal.login(usernameInput);
+                        } catch (err) {
+                            console.error("Erro ao registrar External ID no OneSignal:", err);
+                        }
+                    });
+                }
+
+                const invoicesData = await fetchGoogleSheet('Form_Responses');
+                invoicesData.shift();
+
+                allClientInvoices = [];
+                for(let row of invoicesData) {
+                    while(row.length < 7) row.push(""); 
+                    if ((row[2] ? row[2].toLowerCase() : "") === usernameInput) {
+                        const consumoNum = safeParseFloat(row[1]);
+                        const custoKwhNum = consumoNum * TARIFA_KWH;
+                        const valorBruto = custoKwhNum + globalCip;
+                        const valorCalculado = valorBruto * 0.80;
+                        const descontoReais = valorBruto - valorCalculado;
+                        
+                        allClientInvoices.push({
+                            consumo: consumoNum.toString(),
+                            custoKwhStr: custoKwhNum.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }),
+                            valorBrutoNum: valorBruto,
+                            valor: valorCalculado.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }),
+                            valorBruto: valorBruto.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }),
+                            desconto: descontoReais.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }),
+                            cipStr: globalCip.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }),
+                            mes: row[4] || "Mês",
+                            status: (row[6] ? row[6].toLowerCase() : "").includes('pago') ? 'pago' : 'pendente'
+                        });
+                    }
+                }
+                allClientInvoices.reverse(); 
+
+                document.getElementById('client-name').innerText = usernameInput;
+                document.getElementById('profile-name-large').innerText = usernameInput;
+                document.getElementById('profile-cip').innerText = globalCip.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+                
+                if(allClientInvoices.length > 0) {
+                    document.getElementById('ar-consumo').innerText = allClientInvoices[0].consumo;
+                }
+                
+                switchTab('pendente'); 
+                switchNav('home');
+
+                document.getElementById('login-screen').style.opacity = '0';
+                setTimeout(() => {
+                    document.getElementById('login-screen').style.display = 'none';
+                    document.getElementById('dashboard-screen').classList.remove('hidden');
+                    init3DHouse();
+                    document.getElementById('ar-pv').classList.remove('hidden');
+                }, 500);
+
+            } catch (error) {
+                localStorage.removeItem('solar_username');
+                errorElement.innerText = error.message; errorElement.classList.remove('hidden');
+            } finally {
+                btn.disabled = false; spinner.style.display = 'none'; btnText.innerText = 'Acessar Plataforma';
+            }
+        }
+
+        function switchNav(view) {
+            const homeView = document.getElementById('home-view');
+            const profileView = document.getElementById('profile-view');
+            const navHome = document.getElementById('nav-home');
+            const navProfile = document.getElementById('nav-profile');
+
+            if (view === 'home') {
+                homeView.classList.remove('hidden');
+                profileView.classList.add('hidden');
+                navHome.classList.replace('text-gray-500', 'text-white');
+                navProfile.classList.replace('text-white', 'text-gray-500');
+            } else if (view === 'profile') {
+                homeView.classList.add('hidden');
+                profileView.classList.remove('hidden');
+                navHome.classList.replace('text-white', 'text-gray-500');
+                navProfile.classList.replace('text-gray-500', 'text-white');
+            }
+        }
+
+        function switchTab(tabType) {
+            activeTab = tabType;
+            document.getElementById('tab-pendente').classList.toggle('active', tabType === 'pendente');
+            document.getElementById('tab-pago').classList.toggle('active', tabType === 'pago');
+            
+            const container = document.getElementById('invoice-list-container');
+            container.innerHTML = '';
+            currentFilteredInvoices = allClientInvoices.filter(item => item.status === activeTab);
+
+            if (currentFilteredInvoices.length === 0) {
+                const msg = activeTab === 'pendente' ? '🎉 Nenhuma fatura pendente.' : 'Nenhum histórico pago.';
+                container.innerHTML = `<div class="p-6 text-center text-sm text-gray-500">${msg}</div>`;
+                return;
+            }
+
+            currentFilteredInvoices.forEach((item, index) => {
+                const isPaid = item.status === 'pago';
+                const colorClass = isPaid ? 'text-app-green bg-app-green/10 border-app-green/20' : 'text-app-orange bg-app-orange/10 border-app-orange/20';
+                const label = isPaid ? 'Pago' : 'Pendente';
+
+                container.innerHTML += `
+                    <div class="invoice-item p-4 flex justify-between items-center" onclick="openModal(${index})">
+                        <div>
+                            <p class="font-bold text-white capitalize text-base">${item.mes}</p>
+                            <p class="text-xs text-gray-400 mt-1">Consumo: <span class="font-semibold text-white">${item.consumo} kWh</span></p>
+                            <p class="text-[10px] text-app-orange font-bold mt-2 tracking-wider">VER FATURA ➔</p>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-[9px] font-black text-app-green bg-app-green/20 px-2 py-0.5 rounded border border-app-green/30 uppercase mb-1 w-max ml-auto">-20% OFF</div>
+                            <p class="text-xs text-gray-500 line-through font-medium leading-none mb-0.5">${item.valorBruto}</p>
+                            <p class="text-xl font-black text-white leading-none tracking-tight mb-2">${item.valor}</p>
+                            <span class="text-[10px] font-bold px-2 py-1 rounded border uppercase ${colorClass}">${label}</span>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        function openModal(index) {
+            const invoice = currentFilteredInvoices[index];
+            const isPaid = invoice.status === 'pago';
+
+            document.getElementById('modal-title').innerText = `Fatura ${invoice.mes}`;
+            const badge = document.getElementById('modal-status');
+            badge.innerText = isPaid ? 'PAGO' : 'PENDENTE';
+            badge.className = `text-[10px] font-bold px-2 py-1 rounded border uppercase ${isPaid ? 'text-app-green bg-app-green/10 border-app-green/20' : 'text-app-orange bg-app-orange/10 border-app-orange/20'}`;
+
+            document.getElementById('modal-kwh').innerText = `${invoice.consumo} kWh`;
+            document.getElementById('modal-custo-kwh').innerText = invoice.custoKwhStr;
+            document.getElementById('modal-cip').innerText = invoice.cipStr;
+            document.getElementById('modal-valor-bruto').innerText = invoice.valorBruto;
+            document.getElementById('modal-desconto').innerText = `- ${invoice.desconto}`;
+            document.getElementById('modal-valor-final').innerText = invoice.valor;
+            
+            if(isPaid) {
+                document.getElementById('modal-paid-msg').classList.remove('hidden');
+                document.getElementById('modal-payment-section').classList.add('hidden');
+            } else {
+                document.getElementById('modal-paid-msg').classList.add('hidden');
+                document.getElementById('modal-payment-section').classList.remove('hidden');
+                document.getElementById('pix-btn-text').innerText = "Copiar Código PIX";
+            }
+
+            document.getElementById('modal-overlay').style.display = 'block';
+            setTimeout(() => {
+                document.getElementById('modal-overlay').style.opacity = '1';
+                document.getElementById('bottom-sheet').style.transform = 'translateY(0)';
+            }, 10);
+        }
+
+        function closeModal() {
+            document.getElementById('bottom-sheet').style.transform = 'translateY(100%)';
+            document.getElementById('modal-overlay').style.opacity = '0';
+            setTimeout(() => { document.getElementById('modal-overlay').style.display = 'none'; }, 300);
+        }
+
+        function copyPix() {
+            navigator.clipboard.writeText(PIX_STRING).then(() => {
+                document.getElementById('pix-btn-text').innerText = "Copiado! Abra seu banco";
+                setTimeout(() => { document.getElementById('pix-btn-text').innerText = "Copiar Código PIX"; }, 3000);
+            });
+        }
+
+        function handleLogout() {
+            if (window.OneSignalDeferred) {
+                window.OneSignalDeferred.push(async function(OneSignal) {
+                    await OneSignal.logout();
+                });
+            }
+            localStorage.removeItem('solar_username');
+            window.location.reload(); 
+        }
+
+        // MOTOR 3D
+        let scene, camera, renderer, ambientLight, controls;
+        let energyPath, energyDot, energyGlow, tubeMaterial;
+        let pvPoint; 
+
+        function buildUtilityPole() {
+            const poleGroup = new THREE.Group();
+            
+            const poleMat = new THREE.MeshStandardMaterial({ color: 0x4a3f35, roughness: 0.8 });
+            const metalMat = new THREE.MeshStandardMaterial({ color: 0x777777, metalness: 0.7, roughness: 0.3 });
+            const glassMat = new THREE.MeshStandardMaterial({ color: 0xeeeeee, roughness: 0.1 });
+
+            const poleGeo = new THREE.CylinderGeometry(0.14, 0.20, 7.5, 12);
+            const poleMesh = new THREE.Mesh(poleGeo, poleMat);
+            poleMesh.position.set(-6.5, 2.0, 1.5);
+            poleGroup.add(poleMesh);
+
+            const armGeo = new THREE.BoxGeometry(0.1, 0.1, 1.0);
+            const armMesh = new THREE.Mesh(armGeo, metalMat);
+            armMesh.position.set(-6.5, 5.4, 1.5);
+            poleGroup.add(armMesh);
+
+            const isoGeo = new THREE.CylinderGeometry(0.05, 0.05, 0.15, 8);
+            const iso1 = new THREE.Mesh(isoGeo, glassMat);
+            iso1.position.set(-6.5, 5.52, 1.1);
+            const iso2 = new THREE.Mesh(isoGeo, glassMat);
+            iso2.position.set(-6.5, 5.52, 1.9);
+            poleGroup.add(iso1);
+            poleGroup.add(iso2);
+
+            scene.add(poleGroup);
+        }
+
+        function init3DHouse() {
+            const container = document.getElementById('canvas-container');
+            if(container.children.length > 0) return; 
+
+            scene = new THREE.Scene();
+            const aspect = container.clientWidth / container.clientHeight;
+            
+            camera = new THREE.PerspectiveCamera(50, aspect, 0.1, 1000);
+            camera.position.set(-1.0, 3.5, 16.0);
+
+            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            renderer.setSize(container.clientWidth, container.clientHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            container.appendChild(renderer.domElement);
+
+            controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.05;
+            controls.maxPolarAngle = Math.PI / 2;
+            controls.minDistance = 8;
+            controls.maxDistance = 25;
+            controls.target.set(-0.5, 1.0, 0);
+
+            const ambientIntensity = isDay ? 1.2 : 0.6;
+            ambientLight = new THREE.AmbientLight(0xffffff, ambientIntensity); 
+            scene.add(ambientLight);
+            
+            const dirIntensity = isDay ? 1.5 : 0.4;
+            const dirLight = new THREE.DirectionalLight(0xffffff, dirIntensity); 
+            dirLight.position.set(2, 12, 10); 
+            scene.add(dirLight);
+
+            const loader = new THREE.GLTFLoader();
+            loader.load('./casa.glb', (gltf) => {
+                const houseModel = gltf.scene;
+                houseModel.position.set(0, -1.2, 0);
+                houseModel.scale.set(0.85, 0.85, 0.85);
+                scene.add(houseModel);
+            }, undefined, (error) => {
+                console.error('Erro ao carregar o modelo 3D:', error);
+            });
+
+            buildUtilityPole();
+
+            pvPoint = new THREE.Vector3(-2, 6.5, 3); 
+
+            energyPath = new THREE.CatmullRomCurve3([
+                new THREE.Vector3(-6.5, 5.5, 1.1),
+                new THREE.Vector3(-4.2, 3.3, 1.15),
+                new THREE.Vector3(-1.8, 2.5, 1.1)
+            ]);
+
+            const tubeGeo = new THREE.TubeGeometry(energyPath, 64, 0.035, 8, false);
+            tubeMaterial = new THREE.MeshBasicMaterial({
+                color: 0x00aaff,
+                transparent: true,
+                opacity: 0.85
+            });
+            const wireMesh = new THREE.Mesh(tubeGeo, tubeMaterial);
+            scene.add(wireMesh);
+
+            energyDot = new THREE.Mesh(
+                new THREE.SphereGeometry(0.14, 16, 16),
+                new THREE.MeshBasicMaterial({ color: 0x00aaff })
+            );
+
+            energyGlow = new THREE.PointLight(0x00aaff, 3.0, 4.0);
+            energyDot.add(energyGlow);
+            scene.add(energyDot);
+
+            function animate() {
+                requestAnimationFrame(animate);
+                controls.update();
+                
+                const speed = 3000;
+                const t = (Date.now() % speed) / speed;
+                const progress = isDay ? (1 - t) : t; 
+                
+                const pos = energyPath.getPointAt(progress);
+                energyDot.position.copy(pos);
+                
+                const pulse = 1 + Math.sin(Date.now() * 0.008) * 0.2;
+                energyDot.scale.setScalar(pulse);
+
+                renderer.render(scene, camera);
+                syncOverlay(pvPoint, 'ar-pv'); 
+            }
+            animate();
+
+            window.addEventListener('resize', () => {
+                camera.aspect = container.clientWidth / container.clientHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(container.clientWidth, container.clientHeight);
+            });
+        }
+
+        function syncOverlay(vector3D, elementId) {
+            const el = document.getElementById(elementId);
+            if(!el || el.classList.contains('hidden')) return;
+            const pos = vector3D.clone().project(camera);
+            const x = (pos.x * .5 + .5) * window.innerWidth;
+            const y = (pos.y * -.5 + .5) * window.innerHeight;
+            el.style.display = 'flex'; el.style.left = `${x}px`; el.style.top = `${y}px`;
+        }
+    </script>
+
+    <!-- INSTALAÇÃO PWA -->
+    <script>
+        let deferredPrompt;
+        const installBtn = document.getElementById('pwa-install-btn');
+
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            if (installBtn) installBtn.classList.remove('hidden');
+        });
+
+        if (installBtn) {
+            installBtn.addEventListener('click', async () => {
+                if (!deferredPrompt) return;
+                deferredPrompt.prompt();
+                const { outcome } = await deferredPrompt.userChoice;
+                if (outcome === 'accepted') {
+                    console.log('App instalado com sucesso');
+                }
+                deferredPrompt = null;
+                installBtn.classList.add('hidden');
+            });
+        }
+    </script>
+</body>
+</html>
