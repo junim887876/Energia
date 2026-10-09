@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SolarInvest Cla</title>
+    <title>SolarInvest Cl</title>
     
     <!-- Configurações PWA (iOS e Android) -->
     <link rel="manifest" href="./manifest.json">
@@ -88,6 +88,11 @@
 </head>
 <body>
 
+    <!-- BANNER INDICADOR OFFLINE -->
+    <div id="offline-banner" class="fixed top-0 left-0 right-0 z-[200] bg-app-red text-white text-[11px] font-bold py-1.5 px-4 text-center hidden shadow-md flex items-center justify-center gap-2">
+        <i class="fa-solid fa-wifi"></i> Você está offline. Exibindo dados salvos localmente.
+    </div>
+
     <!-- VIDEO INTRO SPLASH SCREEN -->
     <div id="video-splash" class="fixed inset-0 z-[100] bg-black flex items-center justify-center transition-opacity duration-700">
         <video id="intro-video" class="w-full h-full object-cover" autoplay muted playsinline>
@@ -145,8 +150,9 @@
                         <h2 id="client-name" class="text-lg font-bold capitalize leading-tight">Cliente</h2>
                         <p class="text-xs text-gray-400 font-medium">Cliente SolarInvest</p>
                     </div>
-                    <div class="ml-auto bg-green-500/10 text-green-400 text-[10px] font-bold px-2 py-1 rounded border border-green-500/20 flex items-center gap-1">
-                        <div class="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></div> Online
+                    <div id="connection-status-badge" class="ml-auto bg-green-500/10 text-green-400 text-[10px] font-bold px-2 py-1 rounded border border-green-500/20 flex items-center gap-1">
+                        <div id="connection-dot" class="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></div>
+                        <span id="connection-text">Online</span>
                     </div>
                 </div>
 
@@ -252,6 +258,36 @@
         </div>
     </div>
 
+    <!-- CONTROLE DE REDE ONLINE/OFFLINE -->
+    <script>
+        function checkNetworkStatus() {
+            const banner = document.getElementById('offline-banner');
+            const statusBadge = document.getElementById('connection-status-badge');
+            const statusDot = document.getElementById('connection-dot');
+            const statusText = document.getElementById('connection-text');
+
+            if (!navigator.onLine) {
+                if(banner) banner.classList.remove('hidden');
+                if(statusBadge) {
+                    statusBadge.className = "ml-auto bg-red-500/10 text-red-400 text-[10px] font-bold px-2 py-1 rounded border border-red-500/20 flex items-center gap-1";
+                    statusDot.className = "w-1.5 h-1.5 rounded-full bg-red-500";
+                    statusText.innerText = "Offline";
+                }
+            } else {
+                if(banner) banner.classList.add('hidden');
+                if(statusBadge) {
+                    statusBadge.className = "ml-auto bg-green-500/10 text-green-400 text-[10px] font-bold px-2 py-1 rounded border border-green-500/20 flex items-center gap-1";
+                    statusDot.className = "w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse";
+                    statusText.innerText = "Online";
+                }
+            }
+        }
+
+        window.addEventListener('online', checkNetworkStatus);
+        window.addEventListener('offline', checkNetworkStatus);
+        document.addEventListener('DOMContentLoaded', checkNetworkStatus);
+    </script>
+
     <!-- CONTROLE DO VÍDEO INTRODUÇÃO -->
     <script>
         document.addEventListener('DOMContentLoaded', () => {
@@ -268,10 +304,11 @@
             }
 
             if (introVideo) {
-                // Esconde o vídeo quando ele termina
                 introVideo.addEventListener('ended', hideVideoSplash);
 
-                // Fallback para caso o vídeo não consiga tocar ou falhe por algum bloqueio
+                // Fallback de tempo de segurança (ex: 6s) para caso o evento 'ended' falhe no mobile
+                setTimeout(hideVideoSplash, 6000);
+
                 introVideo.play().catch(err => {
                     console.warn("Autoplay impedido ou falhou:", err);
                     hideVideoSplash();
@@ -360,14 +397,35 @@
             btn.disabled = true; spinner.style.display = 'block'; btnText.innerText = 'Buscando dados...'; errorElement.classList.add('hidden');
 
             try {
-                const loginData = await fetchGoogleSheet('login');
+                let loginData, invoicesData;
+
+                // SE TIVER ONLINE: Busca os dados na planilha e atualiza o localStorage
+                if (navigator.onLine) {
+                    loginData = await fetchGoogleSheet('login');
+                    invoicesData = await fetchGoogleSheet('Form_Responses');
+                    
+                    localStorage.setItem(`cache_login_${usernameInput}`, JSON.stringify(loginData));
+                    localStorage.setItem(`cache_invoices_${usernameInput}`, JSON.stringify(invoicesData));
+                } else {
+                    // SE TIVER OFFLINE: Carrega do cache salvo no localStorage
+                    const localLogin = localStorage.getItem(`cache_login_${usernameInput}`);
+                    const localInvoices = localStorage.getItem(`cache_invoices_${usernameInput}`);
+                    
+                    if (localLogin && localInvoices) {
+                        loginData = JSON.parse(localLogin);
+                        invoicesData = JSON.parse(localInvoices);
+                    } else {
+                        throw new Error("Sem internet e sem dados salvos para este usuário.");
+                    }
+                }
+
                 const userRow = loginData.find(row => row[0] && row[0].toLowerCase() === usernameInput);
                 if (!userRow) throw new Error("Usuário não encontrado.");
 
                 globalCip = safeParseFloat(userRow[1]);
                 localStorage.setItem('solar_username', usernameInput);
 
-                if (window.OneSignalDeferred) {
+                if (window.OneSignalDeferred && navigator.onLine) {
                     window.OneSignalDeferred.push(async function(OneSignal) {
                         try {
                             await OneSignal.login(usernameInput);
@@ -377,7 +435,6 @@
                     });
                 }
 
-                const invoicesData = await fetchGoogleSheet('Form_Responses');
                 invoicesData.shift();
 
                 allClientInvoices = [];
@@ -425,7 +482,7 @@
                 }, 500);
 
             } catch (error) {
-                localStorage.removeItem('solar_username');
+                if (navigator.onLine) localStorage.removeItem('solar_username');
                 errorElement.innerText = error.message; errorElement.classList.remove('hidden');
             } finally {
                 btn.disabled = false; spinner.style.display = 'none'; btnText.innerText = 'Acessar Plataforma';
@@ -535,7 +592,7 @@
         }
 
         function handleLogout() {
-            if (window.OneSignalDeferred) {
+            if (window.OneSignalDeferred && navigator.onLine) {
                 window.OneSignalDeferred.push(async function(OneSignal) {
                     await OneSignal.logout();
                 });
