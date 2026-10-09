@@ -1,7 +1,7 @@
 // Importa a SDK do OneSignal para funcionar dentro do Service Worker principal
 importScripts('https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.sw.js');
 
-const CACHE_NAME = 'solarinvest-energia-v2';
+const CACHE_NAME = 'solarinvest-energia-v3';
 
 // Lista completa com arquivos locais e dependências externas (CDN) necessárias para o modo offline
 const LOCAL_ASSETS = [
@@ -47,23 +47,21 @@ self.addEventListener('activate', (e) => {
   );
 });
 
-// Interceptação com estratégia Cache-First para recursos e Network-First com fallback para requisições
+// Interceptação com estratégia Cache-First e Network Fallback
 self.addEventListener('fetch', (e) => {
   if (!e.request.url.startsWith('http')) return;
 
-  // Não intercepta nem guarda em cache chamadas diretas para a API do Google Sheets ou OneSignal
+  // Ignora requisições diretas de API externas
   if (e.request.url.includes('docs.google.com') || e.request.url.includes('onesignal.com/api')) {
     return;
   }
 
   e.respondWith(
     caches.match(e.request).then((cachedResponse) => {
-      // Se já está no cache (offline ou online), entrega imediatamente
       if (cachedResponse) {
         return cachedResponse;
       }
 
-      // Se não estiver no cache, busca na rede e armazena uma cópia
       return fetch(e.request)
         .then((networkResponse) => {
           if (networkResponse && networkResponse.status === 200 && e.request.method === 'GET') {
@@ -73,7 +71,6 @@ self.addEventListener('fetch', (e) => {
           return networkResponse;
         })
         .catch(() => {
-          // Fallback para index.html se for navegação principal e estiver offline
           if (e.request.mode === 'navigate') {
             return caches.match('./index.html');
           }
