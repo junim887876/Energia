@@ -85,7 +85,7 @@
         .spinner { border: 3px solid rgba(255,255,255,0.1); width: 20px; height: 20px; border-radius: 50%; border-left-color: #fff; animation: spin 1s linear infinite; display: none; margin-right: 8px; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-        /* NOTIFICAÇÃO ESTILO APPLE / IOS */
+        /* NOTIFICAÇÃO ESTILO APPLE / IOS (GLASSMORPHISM) */
         .apple-toast {
             position: fixed;
             top: 16px;
@@ -117,7 +117,7 @@
 </head>
 <body>
 
-    <!-- NOTIFICAÇÃO ESTILO APPLE (OFFLINE / ONLINE) -->
+    <!-- NOTIFICAÇÃO ESTILO APPLE (POP-UP OFFLINE/ONLINE) -->
     <div id="apple-toast" class="apple-toast">
         <div id="toast-icon-bg" class="w-9 h-9 rounded-full bg-red-500/20 flex items-center justify-center flex-shrink-0 text-app-red">
             <i id="toast-icon" class="fa-solid fa-wifi-slash text-base"></i>
@@ -296,7 +296,7 @@
         </div>
     </div>
 
-    <!-- NOTIFICAÇÃO POP-UP ESTILO APPLE -->
+    <!-- SISTEMA DE NOTIFICAÇÃO ESTILO APPLE -->
     <script>
         let toastTimeout;
 
@@ -388,7 +388,7 @@
         });
     </script>
 
-    <!-- LÓGICA PRINCIPAL COM LOGIN PERSISTENTE AUTOMÁTICO -->
+    <!-- LÓGICA PRINCIPAL COM PERSISTÊNCIA DE SESSÃO AUTOMÁTICA -->
     <script>
         const SHEET_ID = '1IxzUCFbGIxOMrCGnjfHNlB16ll64TKh75SDOV1oOnWw';
         const PIX_STRING = "00020126330014br.gov.bcb.pix0111709573141165204000053039865802BR5925JOSE ELVECIO LOPES JUNIOR6009Sao Paulo62230519daqr2210911952847046304402F";
@@ -413,7 +413,7 @@
             }
         }
 
-        // CARREGAMENTO AUTOMÁTICO DO LOGIN SALVO (EX: JUNIOR)
+        // AUTO-LOGIN: MANTÉM A CONTA LOGADA (EX: JUNIOR) MESMO APÓS FECHAR OU ABRIR SEM INTERNET
         window.onload = () => {
             checkDayTime();
             checkNetworkStatus();
@@ -421,8 +421,7 @@
             const savedUser = localStorage.getItem('solar_username');
             if (savedUser) {
                 document.getElementById('username-input').value = savedUser;
-                // Executa a autenticação automática sem exigir intervenção do usuário
-                handleLogin(true);
+                handleLogin(true); // Entra diretamente
             }
         };
 
@@ -474,7 +473,7 @@
             try {
                 let loginData, invoicesData;
 
-                // SE TIVER ONLINE: Busca na planilha e sincroniza no cache
+                // SE TIVER ONLINE: Busca dados da planilha e salva a cópia local
                 if (navigator.onLine) {
                     loginData = await fetchGoogleSheet('login');
                     invoicesData = await fetchGoogleSheet('Form_Responses');
@@ -482,7 +481,7 @@
                     localStorage.setItem(`cache_login_${usernameInput}`, JSON.stringify(loginData));
                     localStorage.setItem(`cache_invoices_${usernameInput}`, JSON.stringify(invoicesData));
                 } else {
-                    // SE TIVER OFFLINE: Carrega dados do cache local do usuário
+                    // SE TIVER OFFLINE: Resgata do localStorage
                     const localLogin = localStorage.getItem(`cache_login_${usernameInput}`);
                     const localInvoices = localStorage.getItem(`cache_invoices_${usernameInput}`);
                     
@@ -556,7 +555,7 @@
                     document.getElementById('ar-pv').classList.remove('hidden');
 
                     if (!navigator.onLine && isAutoLogin) {
-                        showAppleToast("Modo Offline Ativo", `Sessão iniciada como "${usernameInput}".`, false);
+                        showAppleToast("Modo Offline Ativo", `Sessão iniciada para "${usernameInput}".`, false);
                     }
                 }, 500);
 
