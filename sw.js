@@ -3,7 +3,7 @@ importScripts('https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.sw.js');
 
 const CACHE_NAME = 'solarinvest-energia-v3';
 
-// Lista completa com arquivos locais e dependências externas (CDN) necessárias para o modo offline
+// Lista de arquivos locais e dependências externas de CDN para cache offline
 const LOCAL_ASSETS = [
   './',
   './index.html',
@@ -26,7 +26,7 @@ self.addEventListener('install', (e) => {
   e.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
       return cache.addAll(LOCAL_ASSETS).catch((err) => {
-        console.warn('Aviso: Falha ao colocar alguns arquivos no cache inicial:', err);
+        console.warn('Aviso: Falha ao colocar arquivos no cache inicial:', err);
       });
     })
   );
@@ -47,11 +47,11 @@ self.addEventListener('activate', (e) => {
   );
 });
 
-// Interceptação com estratégia Cache-First e Network Fallback
+// Interceptação com estratégia Cache-First e Fallback para Rede
 self.addEventListener('fetch', (e) => {
   if (!e.request.url.startsWith('http')) return;
 
-  // Ignora requisições diretas de API externas
+  // Não intercepta chamadas diretas de API que precisam ser enviadas em tempo real
   if (e.request.url.includes('docs.google.com') || e.request.url.includes('onesignal.com/api')) {
     return;
   }
